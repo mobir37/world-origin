@@ -1,0 +1,2455 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>WORLD: ORIGIN v11</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:#0f100e;color:#e9e4d7;font-family:Arial,"Noto Sans KR",sans-serif;font-size:14px}
+button,input,select,textarea{font:inherit}button{cursor:pointer}
+.num{font-variant-numeric:tabular-nums}
+::-webkit-scrollbar{width:9px;height:9px}::-webkit-scrollbar-track{background:#14150f}
+::-webkit-scrollbar-thumb{background:#3b3a31;border-radius:5px}::-webkit-scrollbar-thumb:hover{background:#4e4c40}
+
+/* ---------- 헤더 ---------- */
+.top{height:52px;background:#171813;border-bottom:1px solid #403e35;display:flex;align-items:center;gap:16px;padding:0 16px;position:sticky;top:0;z-index:20}
+.logo{font-weight:900;letter-spacing:2px;white-space:nowrap;font-size:15px}.logo span{color:#c29a4b}
+.now{display:flex;align-items:baseline;gap:9px;white-space:nowrap}
+.now b{font-size:21px;color:#f0dfb8;letter-spacing:.5px}
+.now .sub{color:#9c9789;font-size:12px}
+.ybar{width:110px;height:4px;background:#2a2922;border-radius:4px;overflow:hidden}
+.ybar i{display:block;height:100%;background:linear-gradient(90deg,#8c6c33,#e0bb6b)}
+.speed{display:flex;gap:3px;margin-left:auto}
+.speed button{padding:5px 8px;background:#22231d;border:1px solid #45433a;color:#c6bda8;border-radius:5px;font-size:11px}
+.speed button.on{background:#866a35;color:#fff;border-color:#bb9553}
+.hbtn{padding:6px 10px;background:#22231d;border:1px solid #45433a;color:#ddd4bd;border-radius:5px;font-size:12px}
+.hbtn:hover{background:#2e2f26}.hbtn.gold{background:#7d6232;border-color:#a9873f;color:#fff}
+
+/* ---------- 상태 한 줄 ---------- */
+.strip{display:flex;align-items:center;gap:12px;padding:7px 16px;background:#14150f;border-bottom:1px solid #2b2a23;font-size:12.5px;color:#b5b0a0;position:sticky;top:52px;z-index:19}
+.strip b{color:#e7dcc0}
+.strip .jump{margin-left:auto;display:flex;gap:5px}
+.strip .jump button{padding:4px 9px;background:#1d1e18;border:1px solid #3d3b33;color:#a7a294;border-radius:20px;font-size:11px}
+.strip .jump button:hover{background:#2a2b22;color:#fff}
+
+/* ---------- 대시보드: 한 화면 ---------- */
+.wrap{padding:12px 16px 26px;max-width:1860px;margin:0 auto}
+.dash{display:grid;gap:11px;grid-template-columns:214px minmax(320px,1fr) 352px;
+ grid-template-rows:minmax(290px,1fr) 234px;grid-template-areas:"kpi map feed" "civ civ war";
+ height:calc(100vh - 148px);min-height:580px}
+.pane{background:#191a15;border:1px solid #3c3b32;border-radius:8px;display:flex;flex-direction:column;overflow:hidden;min-height:0}
+.pane>h2{margin:0;padding:8px 11px;font-size:12px;font-weight:700;letter-spacing:.4px;color:#cdc3aa;background:#1e1f19;border-bottom:1px solid #32312a;display:flex;align-items:center;gap:8px}
+.pane>h2 .r{margin-left:auto;font-weight:400;color:#8b8878;font-size:11px;display:flex;gap:6px;align-items:center}
+.body{flex:1;min-height:0;overflow:auto;padding:9px 10px}
+.body.flush{padding:0}
+.area-kpi{grid-area:kpi;display:flex;flex-direction:column;gap:11px;min-height:0}
+.area-map{grid-area:map}.area-feed{grid-area:feed}.area-civ{grid-area:civ}.area-war{grid-area:war}
+
+/* ---------- KPI ---------- */
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.kpi{background:#11120f;border:1px solid #2e2d27;border-radius:6px;padding:7px 8px;min-width:0}
+.kpi small{display:block;color:#857f72;font-size:10px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kpi b{display:block;font-size:17px;line-height:1.3;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kpi em{font-style:normal;font-size:10px;color:#7fa07f}.kpi em.dn{color:#b4746d}
+.kpi.wide{grid-column:1/-1}.kpi.wide b{font-size:20px}
+
+/* ---------- 흐름 ---------- */
+.flow{display:grid;gap:6px}
+.fi{background:#11120f;border:1px solid #33322a;border-left:3px solid #b08a44;border-radius:5px;padding:7px 8px}
+.fi .n{font-size:12px;font-weight:700;color:#efdfbb}
+.fi .r{float:right;font-size:10px;color:#8d8878;font-weight:400}
+.fi .d{font-size:10.5px;color:#8d8878;line-height:1.45;margin-top:2px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.mini{height:4px;background:#2a2923;border-radius:4px;overflow:hidden;margin-top:5px}
+.mini i{display:block;height:100%;background:#a88446;transition:width .7s linear}
+.mini.tech i{background:#5d86a8}.mini.stab i{background:#6f9465}.mini.low i{background:#ad5a51}.mini.front i{background:#b4705f;transition:width 1s linear}
+
+/* ---------- 지도 ---------- */
+.map{flex:1;min-height:0;position:relative;overflow:hidden;background:#203b45}
+.water{position:absolute;inset:0;background:radial-gradient(circle at 30% 28%,#345c6d,#1f414c 55%,#16323c)}
+.land{position:absolute;background:#65734e;border:2px solid #8c9b6a;box-shadow:inset 0 0 50px #35452e}
+.land b{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:#2d3822;font-size:11px;opacity:.5;font-weight:700;white-space:nowrap}
+#warLines{position:absolute;inset:0;pointer-events:none}
+#lands{position:absolute;inset:0;pointer-events:none}
+#provs{position:absolute;inset:0;pointer-events:none;clip-path:url(#landclip)}   /* 속주는 육지 위에만 그린다 */
+.terrain{position:absolute;inset:0;width:100%;height:100%;display:block}
+.clabel{position:absolute;transform:translate(-50%,-50%);color:#16200f;font-size:11px;font-weight:700;opacity:.5;white-space:nowrap;letter-spacing:.6px;text-shadow:0 0 4px #c9d6a8}
+/* 옆 패널 탭: 최근 사건 · 내 나라 · 개입 */
+.tabs{display:flex;gap:3px}
+.tabs button{padding:3px 9px;background:#15160f;border:1px solid #3d3b33;color:#a7a294;border-radius:4px;font-size:11px}
+.tabs button:hover{color:#fff}.tabs button.on{background:#413621;color:#f0e2c3;border-color:#8b7140}
+.tabp{display:none}.tabp.on{display:block}
+.hint{font-size:10.5px;color:#8d8878;margin:0 0 7px;line-height:1.5}
+.tg{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:8px}
+.tg .btn{text-align:left;padding:6px 8px;font-size:11.5px;line-height:1.3;font-weight:700}
+.tg .btn small{display:block;color:#9a9484;font-size:9.5px;font-weight:400;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tg .btn.danger small{color:#d9a9a3}.tg .btn.blue small{color:#a9bfd6}.tg .btn.gold small{color:#f0e0bd}
+.tg .wide{grid-column:1/-1}
+.prov{position:absolute;pointer-events:none;border:1.5px solid #ffffff22;
+ transition:width .9s,left .9s,top .9s,background .9s,border-radius 1.2s}
+.prov.col{border-style:dashed;border-width:1.5px}
+.marker{position:absolute;transform:translate(-50%,-50%);border-radius:50%;background:#d6b464;border:2px solid #272218;
+ box-shadow:0 0 10px #e5c77b77;cursor:pointer;transition:width .7s,height .7s,left .9s,top .9s,background .7s}
+.marker span{position:absolute;left:calc(100% + 4px);top:50%;transform:translateY(-50%);white-space:nowrap;
+ color:#f1ead8;font-size:10.5px;text-shadow:0 1px 3px #000,0 0 6px #000;pointer-events:none}
+.marker.r0{background:#b9a57a}.marker.r0 span{opacity:.6;font-size:9.5px}
+.marker.r1{background:#d6b464}.marker.r2{background:#e0a35c}.marker.r3{background:#d77c5e}
+.marker.r4{background:#c0574f}.marker.r4 span{font-weight:700}.marker.r5{background:#9e6fb0}.marker.r5 span{font-weight:700}
+.marker.war{animation:pulse 1.2s infinite}.marker.plague{border-color:#7fc08a}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 #e0564766}50%{box-shadow:0 0 0 10px #e0564700}}
+.maplg{position:absolute;right:7px;bottom:6px;background:#0e1a1fcc;border:1px solid #37535e;border-radius:5px;
+ padding:5px 7px;font-size:9.5px;color:#b9c7cc;display:flex;flex-direction:column;gap:2px;pointer-events:none}
+.maplg i{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:4px}
+
+/* ---------- 사건 피드 ---------- */
+.ev{border-left:3px solid #9a783e;background:#11120f;border-radius:0 4px 4px 0;padding:5px 8px;margin-bottom:5px}
+.ev.fresh{animation:in .5s ease-out}
+@keyframes in{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:none}}
+.ev .l1{display:flex;gap:7px;align-items:baseline}
+.ev time{color:#857f72;font-size:10px;white-space:nowrap}
+.ev b{font-size:12px;color:#ede2c7}
+.ev p{margin:1px 0 0;font-size:10.5px;color:#8d8878;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ev.bad{border-color:#a64c45}.ev.good{border-color:#5f8c5e}.ev.god{border-color:#8a6bb0}
+
+/* ---------- 표 ---------- */
+.tbl{font-size:12px;min-width:1060px}
+.thead,.trow{display:grid;grid-template-columns:minmax(96px,1.25fr) 54px minmax(86px,1fr) minmax(78px,0.9fr) minmax(82px,0.98fr) minmax(80px,0.95fr) minmax(70px,0.88fr) 42px 46px;gap:6px;align-items:center;padding:5px 9px}
+.thead{position:sticky;top:0;background:#1c1d17;color:#8b8878;font-size:10.5px;border-bottom:1px solid #35342c;z-index:2;padding-top:7px;padding-bottom:7px}
+.trow{border-bottom:1px solid #212219;cursor:pointer}
+.trow:hover{background:#21221b}
+.trow .nm{display:flex;align-items:center;gap:5px;min-width:0}
+.trow .nm span.t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto;background:#b9a57a}
+.d0{background:#b9a57a}.d1{background:#d6b464}.d2{background:#e0a35c}.d3{background:#d77c5e}.d4{background:#c0574f}.d5{background:#9e6fb0}
+.cell small{display:block;font-size:10px;color:#8d8878;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cell small.l1{color:#dfd3b6;font-size:11px}.cell small.l2{color:#7b776c;font-size:9.5px}
+.cell small.t1{color:#d2c9b0;font-size:11px}.cell small.t2{color:#7b776c;font-size:9.5px}
+.cell small.g1{color:#e3cf9b;font-size:11px}.cell small.g2{color:#7b9a7b;font-size:9.5px}
+.cell small.g1.neg{color:#d98f86}.cell small.g2.neg{color:#c0817a}
+.cell small.l1.vac{color:#b4746d}
+.chips{display:flex;gap:3px;flex:0 0 auto}
+.chip{font-size:9px;padding:1px 4px;border-radius:3px;background:#2c2b24;color:#cfc5ad;white-space:nowrap}
+.chip.war{background:#4e2420;color:#f3c4bc}.chip.sea{background:#1f3a4e;color:#bfdcee}
+.chip.col{background:#4a3a1e;color:#f0d9a8}.chip.emp{background:#2d3f2c;color:#cfe6c4}
+.chip.ww{background:#651f18;color:#ffd2ca}.chip.un{background:#23404a;color:#c2e2ee}.chip.intl{background:#54401c;color:#f8dfa6}
+.erow{padding:6px 9px;border-bottom:1px solid #212219;font-size:11.5px}
+.erow .c{color:#8d8878;font-size:10.5px;line-height:1.75;margin-top:3px}
+.unhead{background:#11120f;border:1px solid #2e2d27;border-radius:6px;padding:8px 9px;margin:0 0 7px;font-size:11.5px;line-height:1.8}
+.unhead b{color:#e9dcb8}.unrow{padding:5px 9px;border-bottom:1px solid #212219;font-size:11px}
+.unrow time{color:#857f72;font-size:10px;margin-right:5px}.unrow b{color:#e3d8bd}
+.unrow div{color:#8d8878;font-size:10.5px;line-height:1.5;margin-top:1px}
+.reslist{display:grid}
+.trow.colrow{background:#15160f}.trow.colrow .nm{padding-left:7px}.chip.pl{background:#1f4029;color:#bfe5c7}.chip.me{background:#3a2f4d;color:#d9c9f0}
+.chip.ally{background:#24374a;color:#bdd6ee}
+.empty{color:#7e7a6e;font-size:11.5px;padding:10px}
+
+.marker.me{border-color:#f0cf6e!important;box-shadow:0 0 0 3px #f0cf6e55,0 0 12px #f0cf6e88}
+.pbox{background:#11120f;border:1px solid #2e2d27;border-radius:7px;padding:8px 10px;margin-bottom:6px;font-size:11.5px;line-height:1.7;color:#cfc5ad}
+.pbox b{color:#e9dcb8}.pbox .nm{font-size:15px;color:#f0dfb8;font-weight:700}
+.pbox .row{display:flex;flex-wrap:wrap;gap:4px 18px;align-items:baseline}
+.pbox .neg{color:#d98f86}.pbox .pos{color:#9fcf9a}
+.pick{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:8px}
+.pick select{grid-column:1/-1;background:#10110e;border:1px solid #49463b;color:#eee8d8;padding:7px;border-radius:5px;width:100%}
+.pick .btn{width:100%}
+/* ---------- 전쟁 ---------- */
+.wrow{background:#11120f;border:1px solid #33322a;border-radius:6px;padding:7px 8px;margin-bottom:6px}
+.wrow .t{font-size:11.5px;display:flex;justify-content:space-between;gap:6px;align-items:baseline}
+.wrow .t b{color:#f0dcd6}
+.wrow .s{font-size:10px;color:#8d8878;margin-top:2px}
+.tug{height:7px;background:#2a2923;border-radius:4px;margin-top:5px;position:relative;overflow:hidden}
+.tug i{display:block;height:100%;background:linear-gradient(90deg,#c87f68,#8e4d3f);transition:width 1s linear}
+.tug u{position:absolute;left:50%;top:0;bottom:0;width:1px;background:#6a685c}
+
+/* ---------- 아래 보조 영역 ---------- */
+.sub{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-top:11px}
+.sub .pane{height:290px}
+h3.sech{font-size:14px;margin:22px 0 9px;padding-bottom:6px;border-bottom:1px solid #32312a;color:#cdc3aa;letter-spacing:.4px}
+.toolgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.tool{background:#191a15;border:1px solid #3c3b32;border-radius:7px;padding:10px}
+.tool h4{margin:0 0 4px;font-size:12px}
+.tool p{font-size:10.5px;color:#8d8878;margin:0 0 8px;line-height:1.45;min-height:44px}
+.btn{background:#22231d;border:1px solid #45433a;color:#ddd4bd;padding:6px 9px;border-radius:5px;font-size:11px;width:100%}
+.btn:hover{background:#2e2f26}.btn.danger{background:#5f2c29;border-color:#84443f;color:#f4d3cd}
+.btn.blue{background:#2f4660;border-color:#4d678a;color:#d6e4f3}.btn.gold{background:#7d6232;border-color:#a9873f;color:#fff}
+.prow{display:flex;justify-content:space-between;gap:8px;align-items:baseline;padding:5px 8px;border-bottom:1px solid #212219;font-size:11.5px}
+.prow.dead{opacity:.45}
+.prow .s{font-size:10px;color:#8d8878}
+.rrow{padding:5px 8px;border-bottom:1px solid #212219;font-size:11.5px}
+.filters{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:9px}
+.filters button{padding:4px 10px;font-size:11px;background:#1d1e18;border:1px solid #3d3b33;color:#a7a294;border-radius:20px}
+.filters button.on{background:#413621;color:#f0e2c3;border-color:#8b7140}
+#historyList{max-height:430px;overflow:auto;background:#191a15;border:1px solid #3c3b32;border-radius:8px;padding:9px}
+
+/* ---------- 모달 ---------- */
+.overlay{display:none;position:fixed;inset:0;background:#000c;z-index:40;align-items:center;justify-content:center;padding:20px}
+.modal{width:min(540px,100%);max-height:88vh;overflow:auto;background:#1a1b16;border:1px solid #5a5547;border-radius:9px;padding:19px}
+.modal h2{margin:0 0 4px;font-size:18px}
+.field{margin:10px 0}.field label{display:block;color:#a7a294;font-size:12px;margin-bottom:4px}
+.field input,.field select,.field textarea{width:100%;background:#10110e;border:1px solid #49463b;color:#eee8d8;padding:9px;border-radius:5px}
+.field textarea{min-height:62px;resize:vertical}
+.mbtns{display:flex;gap:7px;justify-content:flex-end;margin-top:14px}
+.mbtns .btn{width:auto;padding:8px 14px;font-size:13px}
+.kv{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:12px 0}
+.kv div{background:#11120f;border:1px solid #2e2d27;padding:8px;border-radius:5px;font-size:12.5px}
+.kv span{color:#857f72;display:block;font-size:10px}
+.toast{position:fixed;right:16px;bottom:16px;background:#1e1f19;border:1px solid #5a5547;border-left:3px solid #c29a4b;
+ padding:10px 14px;border-radius:6px;z-index:50;font-size:12.5px;opacity:0;transform:translateY(8px);transition:.3s;pointer-events:none}
+.toast.on{opacity:1;transform:none}
+
+@media(max-width:1280px){
+ .sub{grid-template-columns:1fr 1fr}
+ .dash{grid-template-columns:200px minmax(280px,1fr);grid-template-rows:minmax(260px,1fr) 190px 210px;
+  grid-template-areas:"kpi map" "feed feed" "civ war";height:auto;min-height:0}
+ .area-feed .body{max-height:190px}
+ .toolgrid{grid-template-columns:repeat(3,1fr)}
+}
+@media(max-width:820px){
+ .dash{grid-template-columns:1fr;grid-template-areas:"map" "kpi" "feed" "civ" "war";grid-template-rows:300px auto auto 230px 210px}
+ .sub{grid-template-columns:1fr}.toolgrid{grid-template-columns:repeat(2,1fr)}
+ .now b{font-size:17px}.strip{flex-wrap:wrap}
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+ <div class="logo">WORLD:<span>ORIGIN</span></div>
+ <div class="now"><b id="year">—</b><span class="sub" id="sub"></span><span class="ybar"><i id="yearbar"></i></span></div>
+ <div class="speed" id="speedBar"></div>
+ <button class="hbtn gold" onclick="openModal('newWorld')">새 세계</button>
+ <button class="hbtn" onclick="saveGame(true)">저장</button>
+ <button class="hbtn" onclick="loadGame(true)">불러오기</button>
+</header>
+
+<div class="strip">
+ <span id="status"></span>
+ <span class="jump">
+  <button onclick="jump('sec-people')">인물</button>
+  <button onclick="jump('sec-emp')">식민 제국</button>
+  <button onclick="jump('sec-un')">국제 연합</button>
+  <button onclick="jump('sec-rel')">관계</button>
+  <button onclick="showTab('player',true)">내 나라</button>
+  <button onclick="showTab('god',true)">개입</button>
+  <button onclick="jump('sec-history')">연대기</button>
+ </span>
+</div>
+
+<div class="wrap">
+<div class="dash">
+
+ <div class="area-kpi">
+  <div class="pane" style="flex:0 0 auto"><h2>세계 상태 <span class="r" id="nameTag"></span></h2>
+   <div class="body"><div class="kpis" id="statsBox"></div></div></div>
+  <div class="pane" style="flex:1 1 auto;min-height:120px"><h2>시대의 흐름</h2>
+   <div class="body"><div class="flow" id="flowBox"></div></div></div>
+ </div>
+
+ <div class="pane area-map"><h2>세계 지도 <span class="r" id="mapInfo"></span></h2>
+  <div class="map" id="map">
+   <div class="water"></div><div id="lands"></div><div id="provs"></div>
+   <svg id="warLines"></svg><div id="markers"></div>
+   <div class="maplg">
+    <span><i style="background:#b9a57a"></i>부족 <i style="background:#d6b464;margin-left:4px"></i>정착지 <i style="background:#e0a35c;margin-left:4px"></i>도시</span>
+    <span><i style="background:#d77c5e"></i>왕국 <i style="background:#c0574f;margin-left:4px"></i>제국 <i style="background:#9e6fb0;margin-left:4px"></i>연방</span>
+    <span>색 영역=영토 (나라마다 다른 색) · 빗금=식민지 (종주국 색)</span>
+    <span>마커 테두리=나라 색 · 깜빡임=전쟁 · 파란 점선=해상전 · 금색 점선=식민 지배</span>
+   </div>
+  </div>
+ </div>
+
+ <div class="pane area-feed">
+  <h2><span class="tabs" id="sideTabs">
+    <button class="on" data-t="feed" onclick="showTab('feed')">최근 사건</button>
+    <button data-t="player" onclick="showTab('player')">내 나라</button>
+    <button data-t="god" onclick="showTab('god')">개입</button></span>
+   <span class="r" id="sideHint">최신순</span></h2>
+  <div class="body tabp on" id="recent" data-t="feed"></div>
+  <div class="body tabp" id="tab-player" data-t="player">
+   <div class="pick" id="playerPick"><select id="pk"></select>
+    <button class="btn" onclick="pTake()">이 나라를 다스린다</button>
+    <button class="btn gold" onclick="openModal('addNation')">새 나라 세우기</button></div>
+   <div class="pbox" id="playerBox"></div>
+   <div class="tg" id="playerTools">
+    <button class="btn blue" onclick="pDiplo()">외교<small>선전포고 · 동맹 · 교역 제안</small></button>
+    <button class="btn" onclick="pPeace()">강화 제안<small>열세면 영토·배상을 내놓는다</small></button>
+    <button class="btn" onclick="pExpand()">영토 확장<small>빈 땅 차지 · 연 수입 1배</small></button>
+    <button class="btn blue" onclick="pResearch()">연구 투자<small>다음 기술 35% · 연 수입 1.2배</small></button>
+    <button class="btn danger" onclick="pArmy(1)">군비 증강<small>군사 +20% · 0.8배 · 안정 −3</small></button>
+    <button class="btn" onclick="pArmy(-1)">군축<small>군사 −20% · 안정 +3</small></button>
+    <button class="btn" onclick="pWelfare()">민생 안정<small>안정 +10 · 기근·역병 완화 · 1배</small></button>
+    <button class="btn blue" onclick="pUN()">국제 연합<small>가입 / 탈퇴</small></button>
+    <button class="btn danger" onclick="pIndep()">독립 선언<small>종주국에 맞서 봉기</small></button>
+    <button class="btn" onclick="pRelease()">나라 놓기<small>다른 나라를 고른다</small></button>
+   </div>
+  </div>
+  <div class="body tabp" id="tab-god" data-t="god">
+   <p class="hint">세계 전체에 손을 댄다. 결과는 이후 시뮬레이션에 그대로 이어진다.</p>
+   <div class="tg" style="margin-top:0">
+    <button class="btn danger" onclick="openModal('plague')">역병<small>선택 세력에 질병 · 주변으로 전염</small></button>
+    <button class="btn danger" onclick="openModal('disaster')">자연재해<small>지진·화산·홍수 · 대륙 지정</small></button>
+    <button class="btn danger" onclick="openModal('war')">전쟁<small>두 세력을 싸우게 한다</small></button>
+    <button class="btn danger" onclick="openModal('revolution')">혁명<small>체제를 바꾼다 · 안정도 흔들림</small></button>
+    <button class="btn danger" onclick="igniteWorldWar()">세계 대전<small>모든 나라를 두 진영으로</small></button>
+    <button class="btn" onclick="forcePeace()">평화 강제<small>모든 전쟁 종결 · 긴장 완화</small></button>
+    <button class="btn" onclick="bless()">축복<small>모든 세력 인구·안정 상승</small></button>
+    <button class="btn" onclick="openModal('person')">역사적 인물<small>지도자·발명가·장군 탄생</small></button>
+    <button class="btn blue" onclick="openModal('tech')">기술 전수<small>다음 시대 기술을 바로</small></button>
+    <button class="btn" onclick="spawnTribe(true)">새 부족<small>미개척 지역에 출현</small></button>
+    <button class="btn blue" onclick="openModal('un')">국제 연합<small>창설 · 결의 소집 · 정전</small></button>
+    <button class="btn blue" onclick="openModal('colony')">식민 지배<small>식민지로 삼기 · 독립시키기</small></button>
+    <button class="btn gold" onclick="openModal('addNation')">세력 추가<small>새 부족·국가를 세운다</small></button>
+    <button class="btn blue" onclick="rollFate()">운명의 주사위<small>무작위 사건 하나</small></button>
+   </div>
+  </div>
+ </div>
+
+ <div class="pane area-civ"><h2>문명 / 국가 <span class="r"><span id="civCount"></span>
+   <button class="hbtn" style="padding:3px 8px;font-size:10.5px" onclick="openModal('addNation')">+ 추가</button></span></h2>
+  <div class="body flush">
+   <div class="tbl">
+    <div class="thead"><span>세력</span><span>단계</span><span>지도자</span><span>영토</span><span>인구 / 수용</span><span>경제 (국고)</span><span>기술</span><span>안정</span><span class="num">군사</span></div>
+    <div id="civilList"></div>
+   </div>
+  </div>
+ </div>
+
+ <div class="pane area-war"><h2>전쟁 <span class="r"><span id="warCount"></span>
+   <button class="hbtn" style="padding:3px 8px;font-size:10.5px" onclick="forcePeace()">종결</button></span></h2>
+  <div class="body" id="warList"></div></div>
+
+</div><!-- /dash -->
+
+<div class="sub">
+ <div class="pane" id="sec-people"><h2>인물 <span class="r">생존 인물은 소속 세력에 보정을 준다</span></h2>
+  <div class="body flush" id="peopleList"></div></div>
+ <div class="pane" id="sec-emp"><h2>식민 제국 <span class="r" id="empCount"></span></h2>
+  <div class="body flush" id="empList"></div></div>
+ <div class="pane" id="sec-un"><h2>국제 연합 <span class="r" id="unCount"></span></h2>
+  <div class="body" id="unBox"></div></div>
+ <div class="pane" id="sec-rel"><h2>세력 관계 <span class="r">긴장도 높은 순</span></h2>
+  <div class="body flush" id="relList"></div></div>
+</div>
+
+<section id="sec-history">
+ <h3 class="sech">연대기</h3>
+ <div class="filters" id="histFilters"></div>
+ <div id="historyList"></div>
+</section>
+</div><!-- /wrap -->
+
+<div class="overlay" id="unity"><div class="modal"><h2 id="unityTitle">세계 통일</h2>
+ <div id="unityBody" style="font-size:12.5px;color:#cfc5ad;line-height:1.7"></div>
+ <div class="mbtns"><button class="btn" onclick="closeAll()">계속 지켜본다</button>
+  <button class="btn gold" onclick="closeAll();openModal('newWorld')">새 세계</button></div>
+</div></div>
+
+<div class="overlay" id="newWorld"><div class="modal"><h2>새로운 세계</h2>
+ <div class="field"><label>세계 이름</label><input id="wn" value="테라"></div>
+ <div class="field"><label>시작 연도</label><input id="wy" type="number" value="-10000"></div>
+ <div class="field"><label>초기 부족 수</label><select id="wt"><option>3</option><option selected>4</option><option>6</option><option>8</option></select></div>
+ <div class="mbtns"><button class="btn" onclick="closeAll()">취소</button><button class="btn gold" onclick="createWorld()">생성</button></div>
+</div></div>
+
+<div class="overlay" id="addNation"><div class="modal"><h2>부족 / 국가 추가</h2>
+ <div class="field"><label>이름 — 어간만 쓴다. 단계에 따라 '부족 / 왕국 / 제국'이 자동으로 붙는다</label><input id="nn" value="아르테아"></div>
+ <div class="field"><label>종류</label><select id="nt"></select></div>
+ <div class="field"><label>대륙</label><select id="nr"></select></div>
+ <div class="field"><label>설명</label><textarea id="nd">플레이어가 직접 만든 세력</textarea></div>
+ <div class="mbtns"><button class="btn" onclick="closeAll()">취소</button><button class="btn gold" onclick="addNation()">추가</button></div>
+</div></div>
+
+<div class="overlay" id="plague"><div class="modal"><h2>역병 발생</h2>
+ <div class="field"><label>대상</label><select id="pt"></select></div>
+ <div class="field"><label>강도</label><select id="ps"><option value="0.3">약함</option><option value="0.6" selected>보통</option><option value="0.85">심각</option><option value="1">치명적</option></select></div>
+ <div class="mbtns"><button class="btn" onclick="closeAll()">취소</button><button class="btn danger" onclick="doPlague()">발생</button></div>
+</div></div>
+
+<div class="overlay" id="disaster"><div class="modal"><h2>자연재해</h2>
+ <div class="field"><label>종류</label><select id="dt"><option>지진</option><option>화산 폭발</option><option>대홍수</option><option>대가뭄</option><option>폭풍</option><option>혹한</option></select></div>
+ <div class="field"><label>범위</label><select id="dc"></select></div>
+ <div class="field"><label>피해 규모</label><select id="ds"><option value="0.02">작음</option><option value="0.07" selected>보통</option><option value="0.18">대규모</option><option value="0.35">대재앙</option></select></div>
+ <div class="mbtns"><button class="btn" onclick="closeAll()">취소</button><button class="btn danger" onclick="doDisaster()">발생</button></div>
+</div></div>
+
+<div class="overlay" id="war"><div class="modal"><h2>전쟁 시작</h2>
+ <div class="field"><label>공격 측</label><select id="wa"></select></div>
+ <div class="field"><label>방어 측</label><select id="wd"></select></div>
+ <div class="mbtns"><button class="btn" onclick="closeAll()">취소</button><button class="btn danger" onclick="doWar()">시작</button></div>
+</div></div>
+
+<div class="overlay" id="revolution"><div class="modal"><h2>혁명 발생</h2>
+ <div class="field"><label>대상 세력</label><select id="rv"></select></div>
+ <div class="field"><label>혁명 종류</label><select id="rk"><option>민중 봉기</option><option>왕정 전복</option><option>군사 쿠데타</option><option>독립 혁명</option><option>종교 혁명</option></select></div>
+ <div class="mbtns"><button class="btn" onclick="closeAll()">취소</button><button class="btn danger" onclick="doRevolution()">발생</button></div>
+</div></div>
+
+<div class="overlay" id="tech"><div class="modal"><h2>기술 전수</h2>
+ <div class="field"><label>대상 세력</label><select id="tt"></select></div>
+ <div class="mbtns"><button class="btn" onclick="closeAll()">취소</button><button class="btn blue" onclick="doTech()">전수</button></div>
+</div></div>
+
+<div class="overlay" id="person"><div class="modal"><h2>역사적 인물 탄생</h2>
+ <div class="field"><label>소속 세력</label><select id="pe"></select></div>
+ <div class="field"><label>역할</label><select id="pr"></select></div>
+ <div class="mbtns"><button class="btn" onclick="closeAll()">취소</button><button class="btn gold" onclick="doPerson()">탄생</button></div>
+</div></div>
+
+<div class="overlay" id="un"><div class="modal"><h2>국제 연합</h2>
+ <p style="color:#8d8878;font-size:12.5px;margin:4px 0 0">창설하면 가맹국이 분담금을 내고, 전쟁·식민 지배에 결의로 개입한다. 가맹국이 2개국 이하로 줄면 해체된다.
+ 연방이나 국제 연합이 존재하는 동안에는 <b>연합이 끼지 않은 전쟁이라도</b> 패전국이 배상금을 문다.</p>
+ <div class="mbtns"><button class="btn" onclick="closeAll()">닫기</button>
+  <button class="btn" onclick="unForce()">창설하기</button>
+  <button class="btn blue" onclick="unCall()">결의 소집</button>
+  <button class="btn danger" onclick="unPeace()">전면 정전 결의</button></div>
+</div></div>
+
+<div class="overlay" id="diplo"><div class="modal"><h2>외교</h2>
+ <div class="field"><label>상대 나라</label><select id="dp" onchange="pDiploInfo()"></select></div>
+ <div id="dpInfo" style="color:#8d8878;font-size:12px;line-height:1.7;min-height:40px"></div>
+ <div class="mbtns"><button class="btn" onclick="closeAll()">닫기</button>
+  <button class="btn" onclick="pTrade()">교역 제안</button>
+  <button class="btn blue" onclick="pAlly()">동맹 제안 (선물)</button>
+  <button class="btn danger" onclick="pDeclare()">선전포고</button></div>
+</div></div>
+
+<div class="overlay" id="colony"><div class="modal"><h2>식민 지배</h2>
+ <div class="field"><label>종주국 (지배하는 쪽)</label><select id="ca"></select></div>
+ <div class="field"><label>대상 (지배받는 쪽)</label><select id="cb"></select></div>
+ <div class="mbtns"><button class="btn" onclick="closeAll()">취소</button>
+  <button class="btn" onclick="doFree()">대상을 독립시키기</button>
+  <button class="btn danger" onclick="doColony()">식민지로 삼기</button></div>
+</div></div>
+
+<div class="overlay" id="detail"><div class="modal" id="detailBody"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+/* ============================================================
+   WORLD: ORIGIN v10
+   · 현실 1분 = 세계 1년. 시간은 매 프레임 연속적으로 흐른다.
+   · 한 화면 대시보드: 상태 · 흐름 · 지도 · 사건 · 문명표 · 전쟁이 동시에 보인다.
+   · 화면은 바뀐 값만 갱신한다(DOM 재사용) → 깜빡임 없음.
+   ============================================================ */
+
+const TECHS=[
+ {n:"수렵·채집",cap:1,era:"선사 시대"},{n:"농경",cap:4,era:"신석기 시대"},
+ {n:"도자기",cap:6,era:"신석기 시대"},{n:"청동기",cap:10,era:"청동기 시대"},
+ {n:"문자",cap:15,era:"청동기 시대"},{n:"철기",cap:23,era:"철기 시대"},
+ {n:"화폐",cap:33,era:"고전 시대"},{n:"법전",cap:46,era:"고전 시대"},
+ {n:"항해술",cap:70,era:"중세"},{n:"화약",cap:100,era:"중세"},
+ {n:"인쇄술",cap:145,era:"근세"},{n:"증기 기관",cap:260,era:"산업 시대"},
+ {n:"전기",cap:420,era:"산업 시대"},{n:"내연 기관",cap:600,era:"근대"},
+ {n:"전자공학",cap:900,era:"현대"},{n:"정보 기술",cap:1300,era:"정보 시대"}
+];
+const RANKS=["부족","정착지","도시 국가","왕국","제국","연방"];
+const RANK_REQ=[{t:0,p:0},{t:1,p:4000},{t:2,p:18000},{t:4,p:60000},{t:7,p:200000},{t:11,p:600000}];
+const GOVS=["부족 회의","군주제","신정 체제","공화제","제국 체제","민주제"];
+const ROLES=["지도자","발명가","장군","학자","사제","탐험가","제독"];
+const DIRS=["북부","남부","동부","서부","중부","내륙","연안","고원","평원","삼각주","변방","하류","산지","호반"];
+const PROVKIND=["지방","평원","분지","해안","고원","계곡"];
+const SEASONS=["봄","여름","가을","겨울"];
+const CONTINENTS=[
+ {name:"아르카네리아 대륙",area:890000,x:[9,91],y:[11,41],css:"left:4%;top:6%;width:92%;height:40%",waist:0.3},   /* 옛 아르카·네리아를 합친 큰 대륙 */
+ {name:"오르샤 대륙",area:380000,x:[13,41],y:[59,86],css:"left:9%;top:55%;width:36%;height:35%"},
+ {name:"세라딘 대륙",area:400000,x:[61,89],y:[59,86],css:"left:57%;top:55%;width:36%;height:35%"}
+];
+const CONT_MERGE=[0,0,1,2];                                            /* 예전 저장본의 대륙 번호 → 새 번호 */
+const RANKCOL=["#b9a57a","#d6b464","#e0a35c","#d77c5e","#c0574f","#9e6fb0"];
+const SPEEDS=[{v:0,l:"■"},{v:1,l:"1년/분"},{v:2,l:"×2"},{v:5,l:"×5"},{v:20,l:"×20"},{v:100,l:"×100"}];
+const CATS=["전체","문명","경제","국제","기술","전쟁","영토","식민","재해","인물","시대","통일","개입"];
+/* 이름 = 앞부분(어간) + 뒷부분(어미) → 늘 완전한 한 단어가 된다 */
+const NAME_A=["아르","네르","오르","세라","카단","이루","토반","미엔","하르","유사","벨","노아","신","라드",
+ "에핀","쿰","자하","베르","키르","무르","탈","오브","샤를","드라","페른","살","티엔","야르","코른","엘",
+ "우르","간","모스","질","하노","레브","아크","둔","비셀","판"];
+const NAME_B=["미르","타니아","고르","샤드","라운","데인","토스","비아","나크","셀","둔","로스","가드","림",
+ "엔다","베쉬","칸","파라","윈","헬름","모라","시스","툴","렌","노크","바르","디아","루스","가이","템",
+ "하임","오스","네아","키아","발","슈타","론","메르"];
+const PNAME=["아렌","세라","카이","루안","미라","토르","에나","리안","하난","베카","이솔","무라","단","예린","쿠로","아셀"];
+/* 단계·체제·기술에 따라 이름 뒤에 붙는 말 (긴 것부터 잘라내기 위해 길이순 정렬) */
+const SUFFIXES=["부족","부락","마을","읍","성읍 국가","도시 국가","도시국","왕국","입헌 왕국","제국","대제국",
+ "연방 공화국","연방","대공화국","공화국","신성 제국","신정국","민주 연합","연합","식민지","분가","세력"]
+ .sort((a,b)=>b.length-a.length);
+const SAVEKEY="world_origin_v6";
+
+let S=null,nextId=1,running=false,lastTs=0,lastFast=0,lastSlow=0,lastSave=0,histFilter="전체",selSig="";
+const $=id=>document.getElementById(id);
+const rnd=(a,b)=>a+Math.random()*(b-a);
+const ri=(a,b)=>Math.floor(rnd(a,b+1));
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const clamp=(v,a,b)=>v<a?a:(v>b?b:v);
+const fmt=n=>Math.round(n).toLocaleString();
+/* 한눈에 읽히는 축약 숫자 */
+function kfmt(n){
+ n=Math.round(n);
+ if(n>=100000000)return (n/100000000).toFixed(1).replace(/\.0$/,"")+"억";
+ if(n>=10000)return (n/10000).toFixed(1).replace(/\.0$/,"")+"만";
+ return n.toLocaleString();
+}
+function yearStr(y){return y<0?"BC "+Math.abs(Math.floor(y)).toLocaleString():"AD "+Math.floor(y).toLocaleString()}
+function chance(rate,dy){return Math.random()<1-Math.exp(-rate*dy)}
+
+function curYear(){return S?S.start+S.t:0}
+function yearFrac(){const f=S?S.t%1:0;return f<0?f+1:f}
+function season(){return SEASONS[Math.floor(yearFrac()*4)%4]}
+function alive(){return S.entities.filter(e=>e.alive)}
+function civs(){return alive().filter(e=>e.rank>=1)}
+function worldTech(){let m=0;for(const e of alive())if(e.tech>m)m=e.tech;return m}
+function era(){return TECHS[worldTech()].era}
+function worldPop(){let p=S.wildPop;for(const e of alive())p+=e.pop;return p}
+function ent(id){return S.entities.find(e=>e.id===id)}
+/* ---------- 영토: 세력은 속주(provs)를 소유하고, 면적이 수용 한계를 정한다 ---------- */
+function provsOf(e){return S.provs.filter(p=>p.owner===e.id)}
+function landOf(e){let a=0;for(const p of S.provs)if(p.owner===e.id)a+=p.area;return a}
+function claimedArea(c){let a=0;for(const p of S.provs)if(p.cont===c)a+=p.area;return a}
+function freeArea(c){return Math.max(0,CONTINENTS[c].area-claimedArea(c))}
+function worldFree(){let a=0;for(let i=0;i<CONTINENTS.length;i++)a+=freeArea(i);return a}
+function provName(e,first){
+ if(first)return e.base+" 본토";
+ return Math.random()<0.55?e.base+" "+pick(DIRS):genName()+" "+pick(PROVKIND);
+}
+function blobCss(){
+ const v=()=>ri(32,68);
+ return v()+"% "+v()+"% "+v()+"% "+v()+"% / "+v()+"% "+v()+"% "+v()+"% "+v()+"%";
+}
+function addProv(e,cont,area,first){
+ const C=CONTINENTS[cont],same=e.cont===cont;
+ const p={id:nextId++,owner:e.id,cont:cont,name:provName(e,first),area:Math.max(6000,Math.round(area)),
+  shape:blobCss(),rot:ri(0,359),ar:rnd(.68,1.45),
+  x:clamp(same?e.x+rnd(-8,8):rnd(C.x[0],C.x[1]),C.x[0],C.x[1]),
+  y:clamp(same?e.y+rnd(-7,7):rnd(C.y[0],C.y[1]),C.y[0],C.y[1])};
+ S.provs.push(p);return p;
+}
+function grantHome(e){if(!S.provs.some(p=>p.owner===e.id))addProv(e,e.cont,ri(34,56)*1000,true)}
+function claimProv(e){
+ const free=freeArea(e.cont);
+ if(free<12000)return false;
+ const p=addProv(e,e.cont,Math.min(free,ri(14,34)*1000),false);
+ logEv("영토 확장",e.name+"이(가) "+p.name+"을(를) 새로 차지했다. (+"+kfmt(p.area)+"km²)","good","영토");
+ return true;
+}
+function transferProv(win,lose,n){
+ const ps=provsOf(lose),take=Math.min(n,ps.length-1);
+ if(take<=0)return 0;
+ ps.sort((a,b)=>a.area-b.area);                       /* 변방부터 잃는다 */
+ let moved=0;
+ for(let i=0;i<take;i++){ps[i].owner=win.id;moved+=ps[i].area}
+ return moved;
+}
+function capOf(e){return (Math.max(landOf(e),9000)/1000)*95*TECHS[e.tech].cap*e.fert}
+/* ---------- 경제: 국고 · 수입 · 지출 ---------- */
+function tradeCount(e){
+ let n=0;
+ for(const k in S.rel){
+  if(!S.rel[k].trade)continue;
+  const pr=k.split("-");
+  if(+pr[0]===e.id||+pr[1]===e.id)n++;
+ }
+ return n;
+}
+function incomeOf(e,tc){
+ if(tc===undefined)tc=tradeCount(e);
+ let inc=e.pop*0.012*(1+e.tech*0.18)*(0.45+e.stab/120)*(1+tc*0.06)*(e.fert*0.5+0.5);
+ if(e.plague>0.2)inc*=1-e.plague*0.4;
+ if(e.famine>0.2)inc*=1-e.famine*0.3;
+ for(const c of coloniesOf(e))inc+=c.pop*0.012*(1+c.tech*0.18)*0.18;   /* 식민지에서 들어오는 몫 */
+ if(e.overlord)inc*=0.8;                                               /* 종주국에 떼어 준다 */
+ return inc;
+}
+function econOf(e,tc){
+ const inc=incomeOf(e,tc);
+ let ex=e.pop*0.006*(1+e.tech*0.1)*e.armyMul;                          /* 군 유지비 */
+ if(atWar(e))ex*=1.7;                                                  /* 전시 비용 */
+ if(isHegemon(e))ex*=1+S.unity.decad*0.006;                            /* 통일 제국의 부패 */
+ ex+=coloniesOf(e).length*e.pop*0.0004;                                /* 식민지 통치비 */
+ const dues=isMember(e)?inc*0.05:0;                                    /* 국제 연합 분담금 */
+ return {inc:inc,ex:ex+dues,dues:dues,net:inc-ex-dues};
+}
+function goldOf(e){return e.gold||0}
+function payFrom(e,amt){e.gold=goldOf(e)-amt;return amt}               /* 모자라면 빚이 된다 */
+/* ---------- 연방·국제 연합의 중재와 배상금 ---------- */
+function federations(){return alive().filter(e=>e.rank>=5)}
+function arbiters(){return S.un?"국제 연합":(federations().length?federations()[0].name:"")}
+function hasArbiter(){return !!(S.un||federations().length)}
+function toFund(amt){                                                  /* 중재 몫은 연합 기금 또는 연방 국고로 */
+ if(S.un){S.un.fund+=amt;return}
+ const f=federations();
+ if(!f.length)return;
+ const sh=amt/f.length;
+ for(const x of f)x.gold=goldOf(x)+sh;
+}
+function warLevy(A){                                                   /* 전쟁을 시작하면 부담금 */
+ if(!hasArbiter())return;
+ const amt=Math.max(50,incomeOf(A)*0.8);
+ payFrom(A,amt);toFund(amt);
+ logEv("전쟁 부담금",arbiters()+"이(가) 전쟁을 일으킨 "+A.name+"에게 부담금 "+kfmt(amt)+"펜을 부과했다.","bad","경제",true);
+}
+function reparations(L,win,dur){                                       /* 패전국이 무는 배상금 */
+ if(!hasArbiter()||!L.length)return;
+ let total=0;
+ for(const y of L){
+  if(!y.alive)continue;
+  const amt=Math.max(80,incomeOf(y)*(2.2+Math.min(dur,30)*0.08));
+  payFrom(y,amt);total+=amt;
+  y.stab=clamp(y.stab-4,0,100);
+ }
+ if(total<=0)return;
+ const toWin=total*0.6,fee=total*0.4;
+ if(win&&win.alive)win.gold=goldOf(win)+toWin;
+ toFund(fee);
+ logEv("전쟁 배상금",arbiters()+"의 중재로 패전국이 배상금 "+kfmt(total)+"펜을 물었다. "
+  +(win?win.name+"이(가) "+kfmt(toWin)+"펜, ":"")+(S.un?"연합 기금":"연방")+"이 "+kfmt(fee)+"펜을 받았다.","bad","경제",true);
+}
+function arbitrationFee(parts,dur){                                    /* 무승부도 중재료를 낸다 */
+ if(!hasArbiter()||!parts.length)return;
+ let total=0;
+ for(const y of parts){if(!y.alive)continue;const amt=Math.max(40,incomeOf(y)*(0.7+Math.min(dur,20)*0.03));payFrom(y,amt);total+=amt}
+ toFund(total);
+ logEv("중재료",arbiters()+"의 중재로 전쟁 당사국들이 "+kfmt(total)+"펜을 부담했다.","bad","경제",true);
+}
+/* ---------- 국제 연합 ---------- */
+function isMember(e){return !!(S.un&&e&&S.un.members.indexOf(e.id)>=0)}
+function unMembers(){return S.un?S.un.members.map(ent).filter(e=>e&&e.alive&&!e.overlord):[]}
+function dissolveUN(why){                                              /* 가맹국이 2개국 이하로 줄면 연합은 사라진다 */
+ if(!S.un)return;
+ const ms=unMembers(),fund=S.un.fund;
+ if(fund>0&&ms.length){const sh=fund/ms.length;for(const e of ms)e.gold=goldOf(e)+sh}
+ logEv("국제 연합 해체",why+" 국제 연합이 해체되었다."+(fund>0?" 남은 기금 "+kfmt(fund)+"펜은 "+ms.map(e=>e.name).join(", ")+"에 분배되었다.":""),"bad","국제",true);
+ S.un=null;
+}
+function unLeave(e,why){                                               /* 탈퇴 */
+ if(!isMember(e))return;
+ S.un.members=S.un.members.filter(id=>id!==e.id);
+ logEv("국제 연합 탈퇴",e.name+"이(가) "+why+" 국제 연합을 떠났다.","bad","국제",true);
+ if(S.un.host===e.id){const ms=unMembers();S.un.host=ms.length?ms[0].id:0}
+ if(unMembers().length<=2)dissolveUN("가맹국이 "+unMembers().length+"개국만 남아");
+}
+function foundUN(force){
+ if(S.un)return false;
+ const cand=alive().filter(e=>!e.overlord&&e.rank>=(force?2:3));
+ if(cand.length<3)return false;
+ if(!force&&worldTech()<10)return false;
+ cand.sort((x,y)=>y.pop-x.pop);
+ S.un={founded:yearStr(curYear()),foundedT:S.t,members:cand.map(e=>e.id),host:cand[0].id,fund:0,res:[]};
+ logEv("국제 연합 창설",cand.length+"개국이 모여 국제 연합을 세웠다. 이제 전쟁과 식민 지배가 국제 사회의 중재를 받는다. (의장국 "
+  +cand[0].name+")","good","국제",true);
+ return true;
+}
+function unRes(title,desc){
+ if(!S.un)return;
+ S.un.res.unshift({date:yearStr(curYear()),title:title,desc:desc});
+ if(S.un.res.length>14)S.un.res.pop();
+ logEv("연합 결의 — "+title,desc,"god","국제",true);
+}
+function unAction(){
+ if(!S.un)return;
+ const ms=unMembers();if(!ms.length)return;
+ const r=Math.random();
+ if(S.wars.length&&r<0.34){                                            /* 정전 결의 */
+  const w=pick(S.wars),idx=S.wars.indexOf(w);
+  const A=warMembers(w,"a"),B=warMembers(w,"b"),LA=ent(w.a),LB=ent(w.b);
+  if(idx>=0&&LA&&LB){
+   S.wars.splice(idx,1);
+   for(const x of A)for(const y of B)tension(x.id,y.id).ten=35;
+   const losers=w.front>0?B:A,win=w.front>0?LA:LB;
+   reparations(losers,win,S.t-w.startT);
+   unRes("정전 결의",LA.name+" 측과 "+LB.name+" 측의 "+(w.scale||"전쟁")+"을 중단시켰다.");
+  }
+  return;
+ }
+ if(S.wars.length&&r<0.55){                                            /* 제재 결의 */
+  const ag=ent(pick(S.wars).a);
+  if(ag&&ag.alive){
+   const amt=Math.max(60,incomeOf(ag)*1.2);
+   payFrom(ag,amt);toFund(amt);ag.stab=clamp(ag.stab-8,0,100);
+   unRes("제재 결의",ag.name+"에 경제 제재를 내려 "+kfmt(amt)+"펜을 징수했다.");
+   if(isMember(ag)&&Math.random()<0.4)unLeave(ag,"제재에 반발해");
+  }
+  return;
+ }
+ if(r<0.74){                                                           /* 원조 결의 */
+  const need=ms.filter(e=>goldOf(e)<0||e.plague>0.3||e.famine>0.3);
+  const t=need.length?pick(need):pick(ms);
+  const amt=Math.min(S.un.fund*0.3,Math.max(80,incomeOf(t)));
+  if(amt>10){
+   S.un.fund-=amt;t.gold=goldOf(t)+amt;t.plague*=0.4;t.famine*=0.4;t.stab=clamp(t.stab+6,0,100);
+   unRes("원조 결의",t.name+"에 기금 "+kfmt(amt)+"펜을 보내 위기를 덜어 주었다.");
+  }
+  return;
+ }
+ if(r<0.9){                                                            /* 식민지 독립 결의 */
+  const cols=alive().filter(e=>overlordOf(e));
+  if(cols.length){
+   const c=pick(cols),ov=overlordOf(c);
+   if(Math.random()<0.75){
+    c.overlord=null;c.stab=clamp(c.stab+10,0,100);
+    unRes("독립 결의",ov.name+"에 요구해 "+c.name+"의 독립을 승인시켰다.");
+   }else{
+    const amt=Math.max(60,incomeOf(ov)*0.9);
+    payFrom(ov,amt);toFund(amt);ov.stab=clamp(ov.stab-6,0,100);
+    unRes("독립 결의 거부",ov.name+"이(가) "+c.name+"의 독립 요구를 거부해 제재금 "+kfmt(amt)+"펜을 물었다.");
+   }
+  }
+  return;
+ }
+ const h=pick(ms);S.un.host=h.id;
+ unRes("의장국 선출",h.name+"이(가) 새 의장국이 되었다.");
+}
+/* ---------- 해군: 항해술(기술 8) 이후 바다를 건널 수 있다 ---------- */
+function navyOf(e,b){b=b||bonuses(e);return e.pop*0.007*(1+e.tech*0.26)*(e.tech>=8?1:0.18)*b.navy}
+function canSail(e){return e.tech>=8}
+/* ---------- 식민: 종주국과 속령 ---------- */
+function overlordOf(e){if(!e||!e.overlord)return null;const o=ent(e.overlord);return o&&o.alive?o:null}
+/* 나라마다 고유한 색 — 황금각으로 색상을 벌려 이웃끼리 겹치지 않게 한다 */
+function hueOf(e){if(e.hue===undefined)e.hue=Math.round((e.id*137.508)%360);return e.hue}
+function ncol(e,a){const h=hueOf(e);return "hsla("+h+",64%,"+(h>40&&h<200?46:58)+"%,"+(a===undefined?1:a)+")"}
+function coloniesOf(e){return S.entities.filter(x=>x.alive&&x.overlord===e.id)}
+function techNeed(i){return 48*Math.pow(i+1,1.5)}
+function armyOf(e){return e.pop*0.022*(1+e.tech*0.14)*e.armyMul*(0.6+e.stab/150)*((e.gold||0)<0?0.82:1)}
+function inWar(w,e){return w.sa.indexOf(e.id)>=0||w.sb.indexOf(e.id)>=0}
+function atWar(e){return S.wars.some(w=>inWar(w,e))}
+function warsOf(e){return S.wars.filter(w=>inWar(w,e))}
+function warMembers(w,side){return (side==="a"?w.sa:w.sb).map(ent).filter(x=>x&&x.alive)}
+const SCALES=["전쟁","해상 전쟁","국제 전쟁","세계 대전"];
+function dist(a,b){return Math.hypot(a.x-b.x,a.y-b.y)}
+function relKey(a,b){return Math.min(a,b)+"-"+Math.max(a,b)}
+function tension(a,b){const k=relKey(a,b);if(!S.rel[k])S.rel[k]={ten:rnd(8,22),ally:false,trade:false};return S.rel[k]}
+function bonuses(e){
+ const b={stab:0,tech:1,army:1,explore:1,navy:1};
+ for(const p of S.people){
+  if(p.dead||p.ent!==e.id)continue;
+  if(p.role==="지도자")b.stab+=9;else if(p.role==="발명가")b.tech+=.35;
+  else if(p.role==="장군")b.army+=.28;else if(p.role==="학자")b.tech+=.2;
+  else if(p.role==="사제")b.stab+=5;
+  else if(p.role==="탐험가"){b.explore+=.9;b.navy+=.15}
+  else if(p.role==="제독"){b.navy+=.4;b.army+=.08}
+ }
+ return b;
+}
+function logEv(title,desc,type,cat,major){
+ S.evSeq=(S.evSeq||0)+1;
+ S.events.unshift({seq:S.evSeq,date:yearStr(curYear()),t:S.t,title:title,desc:desc,type:type||"",cat:cat||"문명",major:!!major});
+ if(S.events.length>700){for(let i=S.events.length-1;i>=0;i--)if(!S.events[i].major){S.events.splice(i,1);break}}
+ if(S.events.length>1400)S.events.pop();
+}
+
+function genName(){
+ for(let i=0;i<24;i++){
+  const a=pick(NAME_A),b=pick(NAME_B),n=a+b;
+  if(b.charAt(0)===a.charAt(a.length-1))continue;          /* 같은 글자 겹침 방지 */
+  if(S&&S.entities.some(e=>e.base===n))continue;           /* 세계 안에서 중복 방지 */
+  return n;
+ }
+ return pick(NAME_A)+pick(NAME_B);
+}
+function stripSuffix(n){
+ if(!n)return "";
+ n=String(n).trim();
+ for(const sf of SUFFIXES){
+  if(n.endsWith(" "+sf))return n.slice(0,-(sf.length+1)).trim();
+  if(n.length>sf.length&&n.endsWith(sf))return n.slice(0,-sf.length).trim();
+ }
+ return n;
+}
+/* 기술과 단계, 정치 체제가 국호를 결정한다 */
+function suffixOf(e){
+ const T=e.tech,R=e.rank;
+ if(S&&S.unity&&S.unity.ent===e.id)return R>=2?"세계 제국":"천하 부족";   /* 세계를 통일한 나라 */
+ if(R===0)return T>=1?"부락":"부족";
+ if(R===1)return T>=3?"읍":"마을";
+ if(e.gov===2)return R>=4?"신성 제국":"신정국";
+ if(e.gov===3)return R>=4?"대공화국":"공화국";
+ if(e.gov===5)return T>=13?"민주 연합":"연합";
+ if(R===2)return T>=6?"도시 국가":"성읍 국가";
+ if(R===3)return T>=11?"입헌 왕국":"왕국";
+ if(R===4)return T>=11?"대제국":"제국";
+ return T>=13?"연방 공화국":"연방";
+}
+function refreshName(e,silent){
+ const sf=suffixOf(e);
+ if(e.suffix===sf&&e.name)return false;
+ const old=e.name;
+ e.suffix=sf;e.name=e.base+" "+sf;
+ if(!silent&&old)logEv("국호 변경",old+"이(가) 이제 "+e.name+"(으)로 불린다.","good","문명",true);
+ return true;
+}
+/* 지도자 호칭도 단계·체제·기술에 따라 바뀐다 */
+function leaderTitle(e){
+ if(S&&S.unity&&S.unity.ent===e.id&&e.rank>=2)return "세계 황제";
+ if(e.rank===0)return "족장";
+ if(e.rank===1)return "촌장";
+ if(e.gov===2)return "대사제";
+ if(e.gov===3)return e.tech>=11?"대통령":"집정관";
+ if(e.gov===5)return "의장";
+ if(e.rank===2)return "영주";
+ if(e.rank===3)return "왕";
+ if(e.rank===4)return "황제";
+ return "총리";
+}
+function leaderOf(e){
+ if(!e||!e.leader)return null;
+ const p=S.people.find(x=>x.id===e.leader);
+ return p&&!p.dead?p:null;
+}
+function reignOf(p){return Math.max(0,Math.floor(curYear()-(p.since!==undefined&&p.since!==null?p.since:p.bornY)))}
+function appointLeader(e){
+ const t=leaderTitle(e),Y=curYear();
+ /* 이미 활동 중인 어른 가운데서 먼저 뽑고, 없으면 새 인물이 등장한다 — 갓난아기는 즉위하지 않는다 */
+ const pool=S.people.filter(p=>!p.dead&&p.ent===e.id&&p.role!=="지도자"&&Y-p.bornY>=25&&Y-p.bornY<=62);
+ let p,from="";
+ if(pool.length&&Math.random()<0.6){p=pick(pool);from=p.role+"이었던 ";p.role="지도자"}
+ else p=birthPerson(e,false,"지도자",true,ri(27,52));
+ p.since=Y;e.leader=p.id;
+ logEv(t+" 즉위",e.name+"의 새 "+t+"(으)로 "+from+p.name+"("+Math.floor(Y-p.bornY)+"세)이(가) 즉위했다.","good","인물");
+ return p;
+}
+function makeEntity(o){
+ const c=o.cont!==undefined?o.cont:ri(0,CONTINENTS.length-1),C=CONTINENTS[c];
+ const e={id:nextId++,base:o.base||stripSuffix(o.name)||genName(),name:"",suffix:"",
+  rank:o.rank||0,gov:o.gov||0,cont:c,
+  x:rnd(C.x[0],C.x[1]),y:rnd(C.y[0],C.y[1]),
+  pop:o.pop||ri(600,1600),fert:rnd(.82,1.25),tech:o.tech||0,techPts:0,
+  stab:o.stab||rnd(55,72),armyMul:1,plague:0,famine:0,leader:null,overlord:o.overlord||null,
+  gold:o.gold!==undefined?o.gold:ri(200,900),debt:false,
+  founded:yearStr(curYear()),foundedT:S?S.t:0,desc:o.desc||"",alive:true,player:!!o.player,died:null};
+ refreshName(e,true);
+ return e;
+}
+function newWorldState(name,startYear,tribes){
+ nextId=1;
+ S={name:name,start:startYear,t:0,speed:1,wildPop:ri(14000,26000),evSeq:0,
+  entities:[],people:[],events:[],wars:[],rel:{},ongoing:[],provs:[],un:null,player:null,seed:ri(1,2147483646),contV:2,unity:null,unityCount:0,
+  peak:{pop:0,civs:0},hist:{lastPop:0,lastT:0,rate:0}};
+ for(let i=0;i<tribes;i++)spawnTribe(false,true);
+ S.hist.lastPop=worldPop();
+ logEv("세계의 시작",name+" 세계가 열렸다. 부족들이 대륙 곳곳에서 살아가기 시작한다.","","문명",true);
+ return S;
+}
+function spawnTribe(god,silent){
+ if(!S)return;
+ const e=makeEntity({});
+ e.desc=god?"개입으로 등장한 새로운 부족":"자연 속에서 살아가는 수렵·채집 부족";
+ if(god)e.pop=ri(900,2200);
+ S.entities.push(e);
+ grantHome(e);
+ if(!silent)logEv("새로운 부족 출현",e.name+"이(가) "+CONTINENTS[e.cont].name+"에 나타났다.",god?"god":"good",god?"개입":"문명");
+ appointLeader(e);
+ if(god){toast(e.name+" 출현");renderAll()}
+}
+
+/* ---------- 무작위 사건 ---------- */
+const FATES=[
+ {w:7,f:()=>{const e=pick(alive());if(!e)return;e.pop*=1.05;e.stab=clamp(e.stab+4,0,100);
+  logEv("대풍작",e.name+"에 기록적인 수확이 들어 창고가 가득 찼다.","good","문명")}},
+ {w:6,f:()=>{const e=pick(alive());if(!e)return;e.techPts+=techNeed(e.tech)*0.3;
+  logEv("뜻밖의 발견",e.name+"의 장인들이 새로운 방법을 우연히 찾아냈다.","good","기술")}},
+ {w:5,f:()=>{const e=pick(alive());if(!e)return;outbreak(e,rnd(.4,.9),false)}},
+ {w:5,f:()=>{const e=pick(alive());if(!e)return;e.famine=clamp(e.famine+rnd(.4,.9),0,1);e.stab=clamp(e.stab-8,0,100);
+  logEv("흉작",e.name+"의 들판이 말라 식량이 바닥나기 시작했다.","bad","재해")}},
+ {w:4,f:()=>{const e=pick(alive());if(!e)return;const d=pick(["지진","화산 폭발","대홍수","폭풍","산사태"]);
+  e.pop*=rnd(.88,.97);e.stab=clamp(e.stab-10,0,100);
+  logEv(d,e.name+" 일대에 "+d+"이(가) 일어나 정착지가 무너졌다.","bad","재해")}},
+ {w:4,f:()=>{const e=pick(civs());if(!e)return;birthPerson(e,false)}},
+ {w:4,f:()=>{const e=pick(alive());if(!e)return;const got=S.wildPop*rnd(.05,.15);
+  e.pop+=got;S.wildPop-=got;logEv("유민의 유입",fmt(got)+"명 가량의 떠돌이 무리가 "+e.name+"에 받아들여졌다.","good","문명")}},
+ {w:3,f:()=>{const A=pick(alive()),B=pick(alive());if(!A||!B||A.id===B.id)return;
+  const R=tension(A.id,B.id);R.ten=clamp(R.ten+40,0,100);
+  logEv("국경 도발",A.name+"과 "+B.name+" 사이에 피를 보는 충돌이 일어났다.","bad","전쟁");
+  if(R.ten>=85&&!R.ally&&!A.overlord&&!B.overlord&&(A.cont===B.cont||canSail(A))
+     &&!S.wars.some(w=>inWar(w,A)&&inWar(w,B))&&Math.random()<0.5)startWar(A,B,"국경 도발")}},
+ {w:3,f:()=>{const A=pick(alive()),B=pick(alive());if(!A||!B||A.id===B.id)return;
+  const R=tension(A.id,B.id);R.ten=Math.max(0,R.ten-25);R.trade=true;
+  logEv("사절 교환",A.name+"과 "+B.name+"이 사절을 주고받아 관계가 풀렸다.","good","문명")}},
+ {w:3,f:()=>{const e=pick(alive());if(!e)return;e.gov=2;e.stab=clamp(e.stab+10,0,100);
+  logEv("새로운 신앙",e.name+"에 새 종교가 퍼져 사람들을 하나로 묶었다.","good","문명")}},
+ {w:3,f:()=>{const e=pick(alive().filter(x=>x.rank>=2));if(!e)return;revolt(e)}},
+ {w:3,f:()=>{const e=pick(alive());if(!e)return;e.fert=clamp(e.fert+0.08,.5,2);
+  logEv("개간 사업",e.name+"이 황무지를 개간해 더 많은 인구를 먹여 살릴 수 있게 되었다.","good","문명")}},
+ {w:2,f:()=>{const e=pick(alive());if(!e)return;e.pop*=rnd(.9,.96);e.stab=clamp(e.stab-6,0,100);
+  logEv("약탈자 습격","정체불명의 무리가 "+e.name+"의 마을을 약탈했다.","bad","전쟁")}},
+ {w:2,f:()=>{for(const e of alive())e.stab=clamp(e.stab-5,0,100);
+  logEv("하늘의 징조","밤하늘에 긴 꼬리의 별이 나타나 사람들이 불안에 떨었다.","bad","시대")}},
+ {w:2,f:()=>{const e=pick(civs());if(!e)return;birthPerson(e,false,"사제");
+  logEv("예언자의 등장",e.name+"에 하늘의 뜻을 전한다는 자가 나타났다.","good","인물")}},
+ {w:2,f:()=>{const e=pick(civs());if(!e)return;birthPerson(e,false,"장군")}},
+ {w:2,f:()=>{const e=pick(alive());if(!e)return;e.plague=0;e.famine=0;e.stab=clamp(e.stab+8,0,100);
+  logEv("고난의 끝",e.name+"을 괴롭혔던 역병과 굶주림이 마침내 가라앉았다.","good","문명")}},
+ {w:2,f:()=>{const c=ri(0,CONTINENTS.length-1);let n=0;
+  for(const e of alive())if(e.cont===c){e.pop*=.93;e.famine=clamp(e.famine+.5,0,1);n++}
+  if(n)logEv("대가뭄",CONTINENTS[c].name+" 전역에 비가 끊겨 "+n+"개 세력이 굶주렸다.","bad","재해")}},
+ {w:3,f:()=>{const A=pick(alive()),B=pick(alive());if(!A||!B||A.id===B.id||S.wars.some(w=>inWar(w,A)&&inWar(w,B)))return;
+  if(A.cont!==B.cont&&!canSail(A))return;
+  startWar(A,B,"우발적 충돌")}},
+ {w:1,f:()=>{const e=pick(alive());if(!e)return;if(e.tech<TECHS.length-1){e.tech++;e.techPts=0;
+  logEv("천재의 출현",e.name+"의 한 사람이 시대를 앞서 '"+TECHS[e.tech].n+"'을(를) 이뤄냈다.","good","기술",true)}}}
+];
+const FLOWS=[
+ {n:"소빙기",d:"기온이 내려가 수확이 줄고 사람들이 남쪽으로 내려간다.",y:[25,70],m:{growth:-0.012,famine:0.25}},
+ {n:"온난한 시대",d:"기후가 온화해져 들판이 넓어지고 인구가 늘어난다.",y:[30,80],m:{growth:0.008}},
+ {n:"황금기",d:"번영과 학문이 함께 꽃핀다.",y:[20,60],m:{growth:0.006,techMul:1.5,stab:8}},
+ {n:"암흑기",d:"교류가 끊기고 지식이 잊혀간다.",y:[30,80],m:{techMul:0.5,stab:-8}},
+ {n:"교역의 시대",d:"바닷길과 육로가 열려 물자와 소식이 빠르게 돈다.",y:[25,70],m:{growth:0.005,techMul:1.25,tension:-1.2}},
+ {n:"대이동의 시대",d:"무리들이 끊임없이 터전을 옮긴다.",y:[20,50],m:{growth:-0.004,tension:1.5}},
+ {n:"역병의 세기",d:"질병이 끊이지 않고 이 땅을 돈다.",y:[20,50],m:{plagueMul:4}},
+ {n:"신앙의 부흥",d:"거대한 신전이 세워지고 사람들이 모여든다.",y:[25,60],m:{stab:10,techMul:0.85}},
+ {n:"전란의 시대",d:"작은 다툼이 끊임없이 큰 전쟁으로 번진다.",y:[25,60],m:{tension:4.5,stab:-9}},
+ {n:"풍요의 시대",d:"들판이 넘치고 아이들이 많이 태어난다.",y:[30,70],m:{growth:0.011}}
+];
+function wpick(list){let t=0;for(const x of list)t+=x.w;let r=Math.random()*t;
+ for(const x of list){r-=x.w;if(r<=0)return x}return list[list.length-1]}
+function randomFate(){const f=wpick(FATES);try{f.f()}catch(err){}}
+function rollFate(){randomFate();logEv("운명의 주사위","개입으로 역사의 흐름에 주사위가 던져졌다.","god","개입",true);renderAll();toast("주사위가 굴러갔다")}
+function startFlow(){
+ if(S.ongoing.length>=2)return;
+ const cand=FLOWS.filter(f=>!S.ongoing.some(o=>o.n===f.n));
+ if(!cand.length)return;
+ const f=pick(cand),len=rnd(f.y[0],f.y[1]);
+ S.ongoing.push({n:f.n,d:f.d,m:f.m,startT:S.t,endT:S.t+len,len:len});
+ logEv(f.n+" 시작",f.d+" (약 "+Math.round(len)+"년간 이어질 것이다)","","시대",true);
+}
+function flowMods(){
+ const m={growth:0,techMul:1,stab:0,famine:0,tension:0,plagueMul:1};
+ for(const o of S.ongoing){
+  const x=o.m;
+  if(x.growth)m.growth+=x.growth;
+  if(x.techMul)m.techMul*=x.techMul;
+  if(x.stab)m.stab+=x.stab;
+  if(x.famine)m.famine+=x.famine;
+  if(x.tension)m.tension+=x.tension;
+  if(x.plagueMul)m.plagueMul*=x.plagueMul;
+ }
+ return m;
+}
+
+/* ---------- 엔진 ---------- */
+function loop(ts){
+ if(!running){lastTs=0;return}
+ requestAnimationFrame(loop);
+ if(!lastTs){lastTs=ts;return}
+ let dt=(ts-lastTs)/1000;lastTs=ts;
+ if(dt>0.4)dt=0.4;
+ if(S.speed>0){let dy=dt*S.speed/60;while(dy>0){const s=Math.min(dy,0.08);step(s);dy-=s}}
+ updateClock();
+ if(ts-lastFast>220){renderFast();lastFast=ts}
+ if(ts-lastSlow>900){renderSlow();lastSlow=ts}
+ renderEvents();
+ if(ts-lastSave>10000){saveGame(false);lastSave=ts}
+}
+function start(){if(!running){running=true;lastTs=0;requestAnimationFrame(loop)}}
+
+function step(dy){
+ S.t+=dy;
+ const list=alive(),BON={},M=flowMods(),TC={};
+ for(const e of list)BON[e.id]=bonuses(e);
+ for(const k in S.rel){                                   /* 교역로 수를 한 번에 센다 */
+  if(!S.rel[k].trade)continue;
+  const pr=k.split("-");TC[pr[0]]=(TC[pr[0]]||0)+1;TC[pr[1]]=(TC[pr[1]]||0)+1;
+ }
+ /* 국제 연합 */
+ if(!S.un){if(chance(0.03,dy))foundUN(false)}
+ else{
+  for(const e of list)if(!isMember(e)&&!e.overlord&&e.rank>=2&&chance(0.02,dy)){
+   S.un.members.push(e.id);
+   logEv("국제 연합 가입",e.name+"이(가) 국제 연합에 가입했다.","good","국제");
+  }
+  for(const e of list){                                   /* 전쟁에 지쳤거나 체제가 흔들리면 탈퇴한다 */
+   if(!S.un||!isMember(e))continue;
+   if(atWar(e)&&e.stab<35&&chance(0.03,dy))unLeave(e,"전쟁에 매달리느라");
+   else if(e.debt&&chance(0.015,dy))unLeave(e,"분담금을 감당하지 못해");
+  }
+  if(S.un&&unMembers().length<=2)dissolveUN("가맹국이 "+unMembers().length+"개국만 남아");
+  if(S.un&&chance(0.07,dy))unAction();
+ }
+ if(chance(0.02,dy))startFlow();
+ for(let i=S.ongoing.length-1;i>=0;i--){
+  if(S.t>=S.ongoing[i].endT){
+   const o=S.ongoing.splice(i,1)[0];
+   logEv(o.n+" 종료",Math.round(S.t-o.startT)+"년간 이어진 "+o.n+"가 끝났다.","","시대",true);
+  }
+ }
+ if(chance(0.1,dy))randomFate();
+ S.wildPop+=S.wildPop*0.004*(1-S.wildPop/60000)*dy;
+ if(S.wildPop<0)S.wildPop=0;
+
+ for(const e of list){
+  const b=BON[e.id],cap=capOf(e),col=overlordOf(e);   /* col = 이 세력을 지배하는 종주국 */
+  const ec=econOf(e,TC[e.id]||0);                     /* 경제 */
+  e.gold=goldOf(e)+ec.net*dy;
+  if(S.un&&ec.dues)S.un.fund+=ec.dues*dy;
+  const broke=e.gold<0,rich=e.gold>ec.inc*4;
+  if(broke&&!e.debt){e.debt=true;
+   logEv("재정 위기",e.name+"의 국고가 바닥나 빚을 지기 시작했다.","bad","경제",true)}
+  else if(!broke&&e.debt&&e.gold>ec.inc*0.5){e.debt=false;
+   logEv("재정 회복",e.name+"이(가) 빚을 털고 국고를 다시 채웠다.","good","경제")}
+  if(e.plague>0)e.plague=Math.max(0,e.plague-0.14*dy);
+  if(e.famine>0)e.famine=Math.max(0,e.famine-0.3*dy);
+  let r=0.022*(0.4+e.stab/110)+M.growth;
+  if(atWar(e))r-=0.016;
+  if(col)r-=0.006;                                   /* 수탈로 성장이 더디다 */
+  if(isHegemon(e)&&S.unity.decad<50)r+=0.003;        /* 팍스 — 평화의 번영 */
+  if(broke)r-=0.004;else if(rich)r+=0.002;
+  r-=(e.famine+M.famine*0.3)*0.03;
+  e.pop+=e.pop*r*(1-e.pop/cap)*dy;
+  if(e.plague>0)e.pop-=e.pop*0.22*e.plague*dy;
+  if(e.pop<0)e.pop=0;
+  let target=58+b.stab+M.stab;
+  if(e.pop>cap*0.93)target-=16;
+  if(atWar(e))target-=18;
+  if(col)target-=10;                                 /* 지배에 대한 불만 */
+  if(broke)target-=12;                               /* 빈 국고는 불안을 키운다 */
+  if(isHegemon(e))target-=S.unity.decad*0.25;        /* 통일 제국의 권태 */
+  if(e.plague>0)target-=18*e.plague;
+  e.stab+=(clamp(target,5,95)-e.stab)*0.5*dy;
+  e.stab=clamp(e.stab,0,100);
+  if(e.tech<TECHS.length-1){
+   let rate=(0.55+Math.log10(e.pop/400+1)*0.75)*(0.35+e.stab/90)*b.tech*M.techMul;
+   if(neighborBest(e)>e.tech)rate*=1.6;
+   if(col&&col.tech>e.tech)rate*=1.5;                /* 종주국에서 기술이 흘러든다 */
+   if(isHegemon(e)&&S.unity.decad<50)rate*=1.25;     /* 팍스 — 학문이 꽃핀다 */
+   if(broke)rate*=0.7;else if(rich)rate*=1.15;       /* 돈이 연구를 좌우한다 */
+   if(e.plague>0.4||e.famine>0.4)rate*=0.4;
+   e.techPts+=rate*dy;
+   if(e.techPts>=techNeed(e.tech)){e.techPts=0;e.tech++;
+    logEv("기술 발전",e.name+"이(가) '"+TECHS[e.tech].n+"' 단계에 도달했다.","good","기술",true)}
+  }
+  const nr=e.rank+1;
+  if(nr<RANKS.length&&e.tech>=RANK_REQ[nr].t&&e.pop>=RANK_REQ[nr].p&&e.stab>40){
+   const oldName=e.name;
+   e.rank=nr;
+   if(nr===1){e.gov=1;S.wildPop=Math.max(0,S.wildPop-e.pop*0.3)}
+   if(nr===4&&e.gov<4)e.gov=4;
+   refreshName(e,true);
+   logEv(RANKS[nr]+" 성립",oldName+"이(가) "+RANKS[nr]+"(으)로 발전해 이제 "+e.name+"(이)라 불린다.","good","문명",true);
+  }
+  refreshName(e);                                   /* 기술·체제가 바뀌면 국호도 바뀐다 */
+  if(!leaderOf(e)&&chance(0.6,dy))appointLeader(e);  /* 지도자 공위 시 즉위 */
+  if(chance(0.02,dy)&&e.pop>cap*0.72&&provsOf(e).length<9)claimProv(e);
+  if(col){                                          /* 조공과 독립 운동 */
+   col.pop+=e.pop*0.0012*dy;col.techPts+=0.25*dy;
+   if(e.stab<42&&chance(0.035,dy))startIndepWar(e,col);
+  }
+  if((e.pop<400&&e.rank>0)||(e.stab<4&&chance(0.5,dy))){collapse(e,"내부 붕괴");continue}
+  if(chance(0.009*(e.pop>cap*0.8?2.2:1)*M.plagueMul,dy)&&e.plague<0.2)outbreak(e,rnd(.35,.85),false);
+  if(chance(0.012,dy)&&e.famine<0.2){e.famine=rnd(.3,.8);logEv("기근",e.name+"에 흉작이 이어져 기근이 발생했다.","bad","재해")}
+  if(chance(0.02,dy)&&e.rank>=1)birthPerson(e,false);
+  if(chance(0.004*b.explore,dy)&&e.pop>cap*0.62&&list.length<18){
+   if(canSail(e)&&freeArea(e.cont)<20000&&Math.random()<0.7)overseaColony(e);
+   else colonize(e);
+  }
+  if(chance(0.01,dy))minorEvent(e);
+  if(e.stab<22&&chance(0.05,dy)&&e.rank>=2)revolt(e);
+ }
+
+ for(let i=0;i<list.length;i++)for(let j=i+1;j<list.length;j++){
+  const A=list[i],B=list[j],sameC=A.cont===B.cont,d=dist(A,B);
+  const overseas=!sameC&&(canSail(A)||canSail(B));    /* 한쪽이라도 배가 있으면 바다 너머와 얽힌다 */
+  if(!sameC&&d>=26&&!overseas)continue;
+  const mul=sameC?1:(d<26?0.8:0.5);
+  const R=tension(A.id,B.id);
+  if(R.ally)R.ten=Math.max(0,R.ten-6*dy);
+  else if(R.trade)R.ten=clamp(R.ten+(M.tension-2)*dy*mul,0,100);
+  else R.ten=clamp(R.ten+(2.4+Math.abs(A.rank-B.rank)*0.7+M.tension)*dy*mul,0,100);
+  if(!R.trade&&!R.ally&&R.ten<30&&A.tech>=1&&B.tech>=1&&chance(0.02,dy)){
+   R.trade=true;R.ten=Math.max(0,R.ten-12);
+   logEv("교역로 개설",A.name+"과 "+B.name+" 사이에 교역이 시작되었다.","good","문명");
+  }
+  if(!R.ally&&R.ten<14&&R.trade&&chance(0.012,dy)){R.ally=true;
+   logEv("동맹 체결",A.name+"과 "+B.name+"이 동맹을 맺었다.","good","문명",true)}
+  if(!R.ally&&R.ten>60&&!A.overlord&&!B.overlord&&!S.wars.some(w=>inWar(w,A)&&inWar(w,B))
+     &&chance((atWar(A)||atWar(B))?0.035:0.13,dy)){
+   const busy=atWar(A)||atWar(B);
+   if(sameC)startWar(A,B,busy?"제2전선":(freeArea(A.cont)<20000?"영토 쟁탈":"영토 분쟁"));
+   else{const att=canSail(A)?(canSail(B)&&Math.random()<0.5?B:A):B;startWar(att,att===A?B:A,busy?"제2전선":(canSail(A)&&canSail(B)?"해상 패권":"해외 침략"))}
+  }
+ }
+ if(S.t-(S.borderT||0)>=0.5){S.borderT=S.t;borderCheck()}   /* 국경이 맞닿으면 바로 전쟁 */
+ for(const e of list){
+  if(e.plague<0.3)continue;
+  for(const o of list){
+   if(o.id===e.id||o.plague>0.2)continue;
+   if(dist(e,o)<22&&chance(0.08*e.plague*M.plagueMul,dy))outbreak(o,e.plague*0.7,true,e.name);
+  }
+ }
+ for(const w of S.wars.slice()){const wi=S.wars.indexOf(w);if(wi>=0)warStep(w,dy,wi,BON)}   /* 정복으로 다른 전쟁이 지워져도 안전하게 */
+ if(S.wildPop>9000&&list.length<16&&chance(0.012,dy))spawnTribe(false);
+ for(const p of S.people){
+  if(p.dead)continue;
+  const age=curYear()-p.bornY;
+  if(age>=p.life){
+   p.dead=true;p.diedY=curYear();
+   const ow=p.ent?ent(p.ent):null;
+   if(ow&&ow.alive&&ow.leader===p.id){
+    const t=leaderTitle(ow);ow.leader=null;
+    logEv(t+" 서거",ow.name+"의 "+t+" "+p.name+"이(가) "+Math.floor(age)+"세로 세상을 떠났다. (재위 "+reignOf(p)+"년)","bad","인물",true);
+   }else logEv(p.name+" 사망",p.role+" "+p.name+"이(가) "+Math.floor(age)+"세로 생을 마쳤다.","","인물");
+  }
+ }
+ checkUnity(dy);                                     /* 독립국이 하나만 남았는가 */
+ const wp=worldPop();
+ if(wp>S.peak.pop)S.peak.pop=wp;
+ if(civs().length>S.peak.civs)S.peak.civs=civs().length;
+}
+
+function neighborBest(e){let m=0;for(const o of alive()){if(o.id!==e.id&&dist(e,o)<30&&o.tech>m)m=o.tech}return m}
+function outbreak(e,sev,spread,from){
+ e.plague=clamp(Math.max(e.plague,sev),0,1);
+ logEv("역병 발생",spread?(from+"에서 번진 역병이 "+e.name+"까지 퍼졌다."):(e.name+"에 역병이 퍼지기 시작했다."),"bad","재해");
+}
+function minorEvent(e){
+ const a=[
+  ["풍년","올해 "+e.name+"의 수확이 크게 늘었다.","good",()=>{e.pop*=1.02;e.stab=clamp(e.stab+3,0,100)}],
+  ["대규모 축제",e.name+"에서 성대한 제례가 열려 결속이 강해졌다.","good",()=>{e.stab=clamp(e.stab+5,0,100)}],
+  ["교역 확대",e.name+"의 상인들이 먼 지역까지 진출했다.","good",()=>{e.techPts+=6}],
+  ["국경 소란",e.name+" 변방에서 충돌이 잦아졌다.","bad",()=>{e.stab=clamp(e.stab-5,0,100)}],
+  ["이주 물결",e.name+"으로 사람들이 모여들었다.","good",()=>{e.pop+=S.wildPop*0.04;S.wildPop*=0.96}],
+  ["도시 화재",e.name+"의 정착지 일부가 불에 탔다.","bad",()=>{e.pop*=0.985;e.stab=clamp(e.stab-3,0,100)}]
+ ];
+ const x=pick(a);x[3]();logEv(x[0],x[1],x[2],"문명");
+}
+function colonize(e){
+ const C=CONTINENTS[e.cont];
+ if(freeArea(e.cont)<14000&&provsOf(e).length<2)return;        /* 나눠줄 땅이 없다 */
+ const n=makeEntity({cont:e.cont,base:genName(),rank:Math.max(0,e.rank-1),tech:e.tech,pop:e.pop*0.16,gov:e.gov});
+ n.x=clamp(e.x+rnd(-11,11),C.x[0],C.x[1]);n.y=clamp(e.y+rnd(-9,9),C.y[0],C.y[1]);
+ n.desc=e.name+"에서 갈라져 나온 분가";
+ e.pop*=0.84;S.entities.push(n);
+ const ps=provsOf(e);
+ if(ps.length>=2){ps.sort((a,b)=>a.area-b.area);ps[0].owner=n.id;ps[0].name=n.base+" 본토"}
+ grantHome(n);appointLeader(n);
+ const R=tension(e.id,n.id);R.ten=6;R.trade=true;
+ logEv("새 정착지 개척",e.name+"의 사람들이 이주해 "+n.name+"을(를) 세웠다. ("+kfmt(landOf(n))+"km²)","good","문명");
+}
+/* 바다를 건너 세운 식민지는 처음부터 종주국의 지배를 받는다 */
+function overseaColony(e){
+ let best=-1,ba=0;
+ for(let i=0;i<CONTINENTS.length;i++){if(i===e.cont)continue;const f=freeArea(i);if(f>ba){ba=f;best=i}}
+ if(best<0||ba<16000)return false;
+ const n=makeEntity({cont:best,base:genName(),rank:Math.max(1,e.rank-2),tech:e.tech,
+  pop:e.pop*0.1,gov:e.gov,overlord:e.id});
+ n.desc=e.name+"이(가) 바다를 건너 세운 식민지";
+ e.pop*=0.93;S.entities.push(n);
+ addProv(n,best,Math.min(ba,ri(16,30)*1000),true);
+ appointLeader(n);
+ const R=tension(e.id,n.id);R.ten=4;R.trade=true;
+ logEv("해외 식민지 건설",e.name+"의 함대가 "+CONTINENTS[best].name+"에 "+n.name+"을(를) 세웠다. ("
+  +kfmt(landOf(n))+"km²)","good","식민",true);
+ return true;
+}
+function ousted(e){
+ const L=leaderOf(e);
+ if(!L)return;
+ const t=leaderTitle(e);
+ L.dead=true;L.diedY=curYear();e.leader=null;
+ logEv(t+" 축출",e.name+"의 "+t+" "+L.name+"이(가) "+reignOf(L)+"년 만에 자리에서 쫓겨났다.","bad","인물",true);
+}
+function revolt(e){
+ e.stab=clamp(e.stab+22,0,100);
+ ousted(e);
+ if(Math.random()<0.4&&e.rank>1){e.rank--;e.pop*=0.9;
+  logEv("내전",e.name+"이 내전으로 분열되어 "+RANKS[e.rank]+" 수준으로 후퇴했다.","bad","전쟁",true);refreshName(e)}
+ else{e.gov=e.gov===1?3:(e.gov===4?3:1);e.pop*=0.96;
+  logEv("정변",e.name+"에서 봉기가 일어나 체제가 "+GOVS[e.gov]+"로 바뀌었다.","bad","문명");refreshName(e)}
+}
+function collapse(e,why,toId){
+ e.alive=false;e.died=yearStr(curYear());
+ S.wildPop+=e.pop*0.5;e.pop=0;
+ removeFromWars(e);
+ if(isMember(e)){S.un.members=S.un.members.filter(id=>id!==e.id);if(unMembers().length<=2)dissolveUN(e.name+"이(가) 사라져 가맹국이 "+unMembers().length+"개국만 남자")}
+ for(const k in S.rel){const pr=k.split("-");if(+pr[0]===e.id||+pr[1]===e.id)delete S.rel[k]}
+ if(toId){for(const p of S.provs)if(p.owner===e.id)p.owner=toId}   /* 영토가 승자에게 넘어간다 */
+ else S.provs=S.provs.filter(p=>p.owner!==e.id);                   /* 땅이 비어 다시 개척된다 */
+ for(const o of S.entities)if(o.alive&&o.overlord===e.id){
+  o.overlord=toId||null;
+  if(!o.overlord)logEv("지배의 종식",e.name+"이(가) 사라져 "+o.name+"이(가) 홀로 서게 되었다.","good","식민",true);
+ }
+ e.overlord=null;
+ logEv(e.name+" 소멸",why+"으로 "+e.name+"이(가) 역사에서 사라졌다.","bad","문명",true);
+ if(S.player===e.id){S.player=null;logEv("내 나라의 멸망","다스리던 "+e.name+"이(가) 멸망했다. 새 나라를 골라 다시 시작할 수 있다.","god","개입",true);toast(e.name+"이(가) 멸망했다")}
+}
+function addToWar(w,e,side,why){
+ if(inWar(w,e)||e.overlord)return false;        /* 식민지는 참전하지 않는다 */
+ (side==="a"?w.sa:w.sb).push(e.id);
+ const lead=ent(side==="a"?w.a:w.b);
+ logEv("참전",e.name+"이(가) "+(lead?lead.name:"한쪽")+" 편에 서서 참전했다."+(why?" ("+why+")":""),"bad","전쟁",true);
+ updateWarMeta(w,true);
+ return true;
+}
+function joinColonies(w){                      /* 식민지는 전쟁에 끌려 들어가지 않는다 — 종주국이 대신 싸운다 */
+ for(const side of ["a","b"]){
+  const arr=side==="a"?w.sa:w.sb;
+  for(const id of arr.slice()){
+   const m=ent(id);if(!m||!m.alive)continue;
+   const ov=overlordOf(m);
+   if(ov&&!inWar(w,ov))arr.push(ov.id);
+  }
+ }
+}
+function joinAllies(w){
+ for(const side of ["a","b"]){
+  for(const id of (side==="a"?w.sa:w.sb).slice()){
+   const m=ent(id);if(!m||!m.alive)continue;
+   for(const o of alive()){
+    if(inWar(w,o)||o.overlord)continue;
+    if(tension(o.id,m.id).ally&&Math.random()<0.9)addToWar(w,o,side,"동맹 참전");
+   }
+  }
+ }
+}
+function updateWarMeta(w,announce){
+ const A=warMembers(w,"a"),B=warMembers(w,"b");
+ let land=false;
+ for(const x of A)for(const y of B)if(x.cont===y.cont)land=true;
+ w.sea=!land;
+ const all=A.concat(B),n=all.length,cs={};
+ for(const e of all)cs[e.cont]=1;
+ const nc=Object.keys(cs).length;
+ const sc=(n>=6||nc>=3)?"세계 대전":(n>=3?"국제 전쟁":(w.sea?"해상 전쟁":"전쟁"));
+ const up=SCALES.indexOf(sc)>SCALES.indexOf(w.scale||"전쟁");
+ w.scale=sc;
+ if(announce&&up&&(sc==="국제 전쟁"||sc==="세계 대전")){
+  logEv(sc+" 발발",n+"개국이 "+nc+"개 대륙에 걸쳐 맞붙는 "+sc+"으로 번졌다. ("
+   +A.map(e=>e.name).join(", ")+" ↔ "+B.map(e=>e.name).join(", ")+")","bad","전쟁",true);
+  if(sc==="세계 대전")for(const e of alive())e.stab=clamp(e.stab-12,0,100);
+ }
+}
+function startWar(A,B,cause,indep){
+ if(!indep){
+  if(A.overlord)return null;                               /* 식민지·속국은 전쟁을 일으킬 수 없다 */
+  if(B.overlord){const ov=overlordOf(B);if(!ov||ov.id===A.id)return null;B=ov}   /* 식민지를 치면 종주국과 싸우는 것이다 */
+  if(S.wars.some(w=>inWar(w,A)&&inWar(w,B)))return null;
+ }
+ const sea=A.cont!==B.cont;
+ const w={id:nextId++,a:A.id,b:B.id,sa:[A.id],sb:[B.id],front:0,start:curYear(),startT:S.t,
+  cause:cause,battles:0,dead:0,sea:sea,indep:!!indep,scale:sea?"해상 전쟁":"전쟁"};
+ S.wars.push(w);
+ tension(A.id,B.id).ten=100;
+ logEv(sea?"해상 전쟁 발발":"전쟁 발발",
+  A.name+"이(가) "+B.name+"을(를) 상대로 "+(sea?"바다를 건너 전쟁을":"전쟁을")+" 시작했다. ("+cause+")","bad","전쟁",true);
+ if(!indep){joinColonies(w);joinAllies(w);warLevy(A)}
+ updateWarMeta(w,true);
+ return w;
+}
+function startIndepWar(c,ov){
+ if(S.wars.some(w=>inWar(w,c)&&inWar(w,ov)))return;
+ startWar(c,ov,"독립 전쟁",true);
+ logEv("독립 운동",c.name+"이(가) 종주국 "+ov.name+"의 지배에 맞서 봉기했다.","bad","식민",true);
+}
+function removeFromWars(e){
+ for(let i=S.wars.length-1;i>=0;i--){
+  const w=S.wars[i];
+  w.sa=w.sa.filter(id=>id!==e.id);w.sb=w.sb.filter(id=>id!==e.id);
+  if(!w.sa.length||!w.sb.length){S.wars.splice(i,1);continue}
+  if(w.a===e.id)w.a=w.sa[0];
+  if(w.b===e.id)w.b=w.sb[0];
+  updateWarMeta(w,false);
+ }
+}
+/* 개입: 모든 나라를 두 진영으로 갈라 세계 대전을 일으킨다 */
+function igniteWorldWar(){
+ const ind=alive().filter(e=>!e.overlord&&!atWar(e));
+ if(ind.length<4){toast("세계 대전을 벌일 나라가 부족하다");return}
+ ind.sort((x,y)=>(armyOf(y)+navyOf(y))-(armyOf(x)+navyOf(x)));
+ const LA=ind[0],LB=ind[1];
+ const w=startWar(LA,LB,"세계 패권");
+ if(!w){toast("세계 대전을 일으킬 수 없다");return}
+ let i=0;
+ for(const o of ind){
+  if(inWar(w,o))continue;
+  const toA=tension(o.id,LA.id).ally?true:(tension(o.id,LB.id).ally?false:(i++%2===0));
+  addToWar(w,o,toA?"a":"b","세계 대전 참전");
+ }
+ joinColonies(w);updateWarMeta(w,true);
+ logEv("세계 대전","세계가 두 진영으로 갈라져 전면전에 들어갔다.","god","전쟁",true);
+ renderAll();toast("세계 대전이 시작되었다");
+}
+function warStep(w,dy,idx,BON){
+ const A=warMembers(w,"a"),B=warMembers(w,"b");
+ if(!A.length||!B.length){S.wars.splice(idx,1);return}
+ for(const x of A)for(const y of B)tension(x.id,y.id).lastWar=S.t;   /* 끝난 뒤 한동안 휴전 */
+ let LA=ent(w.a),LB=ent(w.b);
+ if(!LA||!LA.alive){LA=A[0];w.a=LA.id}
+ if(!LB||!LB.alive){LB=B[0];w.b=LB.id}
+ const sea=!!w.sea;
+ const pw=e=>{const b=(BON&&BON[e.id])||bonuses(e);return sea?navyOf(e,b):armyOf(e)*b.army};
+ let sa=0,sb=0;
+ for(const e of A)sa+=pw(e);
+ for(const e of B)sb+=pw(e);
+ const tot=sa+sb||1;
+ const dur0=S.t-w.startT;
+ const fatigue=1+Math.min(dur0,25)*0.03;               /* 오래 끌수록 전선이 빨리 무너진다 */
+ w.front=clamp(w.front+((sa-sb)/tot)*(sea?0.3:0.5)*fatigue*dy*rnd(.6,1.4),-1,1);
+ const base=(sea?0.007:0.016)*dy;                      /* 해전은 인구 피해가 적고 길게 간다 */
+ const hit=(arr,lead,opp)=>{
+  for(const e of arr){
+   const k=(e.id===lead.id?1:0.65)*(1+opp/tot);
+   const dead=e.pop*base*k;
+   e.pop-=dead;w.dead+=dead*0.5;
+   e.stab=clamp(e.stab-(sea?3.5:6)*dy*(e.id===lead.id?1:0.7),0,100);
+  }
+ };
+ hit(A,LA,sb);hit(B,LB,sa);
+ if(chance(sea?0.5:0.8,dy)){
+  w.battles++;
+  const strongA=sa>=sb;
+  const r=Math.random();
+  if(r<0.22){                                          /* 결정적 전투 — 전선이 크게 흔들린다 */
+   const upset=Math.random()<0.25;                     /* 약한 쪽이 뒤집는 일도 있다 */
+   const toA=upset?!strongA:strongA;
+   const jump=rnd(0.15,0.32)*(sea?0.7:1);
+   w.front=clamp(w.front+(toA?jump:-jump),-1,1);
+   const win=toA?LA:LB,lose=toA?LB:LA;
+   const loss=lose.pop*rnd(0.02,0.045);lose.pop-=loss;w.dead+=loss;
+   lose.stab=clamp(lose.stab-8,0,100);win.stab=clamp(win.stab+3,0,100);
+   logEv(upset?(sea?"기적의 해전":"기적의 역전"):(sea?"대해전":"대승"),
+    (sea?pick(["해협","대양","군도","만"])+" 해전에서 ":"")+win.name+"이(가) "+lose.name+"의 "+(sea?"주력 함대":"주력군")+"을 "
+    +(upset?"뜻밖에 ":"")+"궤멸시켰다. ("+kfmt(loss)+"명 전사)","bad","전쟁",true);
+  }else if(r<0.34&&!sea){                              /* 약탈·초토화 */
+   const win=w.front>0?LA:LB,lose=w.front>0?LB:LA;
+   lose.pop*=0.985;lose.famine=clamp(lose.famine+0.25,0,1);lose.stab=clamp(lose.stab-5,0,100);
+   win.gold=goldOf(win)+incomeOf(lose)*0.3;
+   logEv("초토화",win.name+" 군대가 "+lose.name+"의 들판과 마을을 불태우고 약탈했다.","bad","전쟁");
+  }else if(w.battles%2===0){
+   const win=w.front>0?LA:LB;
+   if(sea)logEv(pick(["근해","해협","군도","대양","만"])+" 해전",
+    LA.name+" 함대와 "+LB.name+" 함대가 맞붙어 "+win.name+"이(가) 제해권을 쥐었다.","bad","전쟁");
+   else logEv("전투",LA.name+"과 "+LB.name+"의 전투에서 "+win.name+"이(가) 우세를 점했다.","bad","전쟁");
+  }
+ }
+ /* 수도 함락 — 전선이 한쪽으로 깊이 밀리면 패색이 짙어진다 */
+ if(!sea&&Math.abs(w.front)>0.78&&!w.sieged){
+  w.sieged=true;
+  const win=w.front>0?LA:LB,lose=w.front>0?LB:LA;
+  lose.stab=clamp(lose.stab-20,0,100);lose.pop*=0.96;
+  win.gold=goldOf(win)+Math.max(40,goldOf(lose)*0.3);if(goldOf(lose)>0)lose.gold*=0.7;
+  logEv("수도 함락",win.name+" 군대가 "+lose.name+"의 수도를 점령했다. 국고가 약탈되고 민심이 무너진다.","bad","전쟁",true);
+ }
+ /* 확전 — 동맹과 숙적이 끼어들어 국제전·세계대전으로 번진다 */
+ if(!w.indep&&chance(0.13,dy)){
+  const cand=alive().filter(o=>!inWar(w,o)&&!o.overlord&&(o.cont===LA.cont||o.cont===LB.cont||canSail(o)));
+  if(cand.length){
+   const o=pick(cand),tA=tension(o.id,LA.id),tB=tension(o.id,LB.id);
+   const shy=isMember(o)&&Math.random()<0.3;             /* 가맹국은 참전을 꺼린다 */
+   if(shy){}
+   else if(tA.ally&&!tB.ally)addToWar(w,o,"a","동맹 참전");
+   else if(tB.ally&&!tA.ally)addToWar(w,o,"b","동맹 참전");
+   else if(tA.ten>60&&tA.ten>=tB.ten)addToWar(w,o,"b","숙적 참전");
+   else if(tB.ten>60)addToWar(w,o,"a","숙적 참전");
+   else if(Math.abs(w.front)>0.5&&Math.random()<0.3){    /* 기회주의 — 이기는 편에 올라탄다 */
+    addToWar(w,o,w.front>0?"a":"b","승자 편 가담");
+   }
+  }
+ }
+ const dur=S.t-w.startT;
+ if(Math.abs(w.front)>=1){
+  const winA=w.front>0;
+  const W=winA?A:B, L=winA?B:A, win=winA?LA:LB, lose=winA?LB:LA;
+  const take=lose.pop*(sea?0.25:0.38);
+  lose.pop-=take;win.pop+=take*0.6;
+  win.stab=clamp(win.stab+12,0,100);lose.stab=clamp(lose.stab-25,0,100);
+  const loot=Math.max(0,goldOf(lose))*0.5;lose.gold=goldOf(lose)-loot;win.gold=goldOf(win)+loot;   /* 국고 약탈 */
+  for(const x of W)for(const y of L)tension(x.id,y.id).ten=70;
+  S.wars.splice(idx,1);
+  if(w.indep){                                         /* 독립 전쟁의 결말 */
+   if(win.overlord===lose.id){
+    win.overlord=null;win.stab=clamp(win.stab+12,0,100);
+    logEv("독립 달성",win.name+"이(가) "+lose.name+"의 지배를 끝내고 독립을 이뤘다.","good","식민",true);
+   }else{
+    lose.stab=clamp(lose.stab+14,0,100);
+    const mv=transferProv(win,lose,1);
+    logEv("독립 진압",win.name+"이(가) "+lose.name+"의 독립 운동을 진압했다."+(mv?" ("+kfmt(mv)+"km² 몰수)":""),"bad","식민",true);
+   }
+   return;
+  }
+  const crushed=lose.pop<win.pop*0.35&&!sea&&Math.random()<0.5;   /* 압도적이면 통째로 삼킨다 */
+  if(lose.pop<1500||lose.rank===0||crushed){
+   const land=landOf(lose);
+   logEv("정복",win.name+"이(가) "+lose.name+"을(를) 완전히 정복하고 "+kfmt(land)+"km²를 병합했다.","bad","전쟁",true);
+   win.pop+=lose.pop;collapse(lose,"정복",win.id);
+   if(win.rank<RANKS.length-1&&win.rank>=3&&win.pop>RANK_REQ[win.rank+1].p*0.8){win.rank++;refreshName(win,true)}
+  }else if(!lose.overlord&&(sea||Math.random()<0.6)){   /* 식민 지배 / 속국화 */
+   lose.overlord=win.id;removeFromWars(lose);
+   const kind=sea?"식민지":"속국",mv=transferProv(win,lose,1);
+   logEv(sea?"식민 지배":"속국화",
+    win.name+"이(가) "+lose.name+"을(를) "+kind+"(으)로 삼았다."+(mv?" ("+kfmt(mv)+"km² 할양)":""),"bad","식민",true);
+   if(win.rank>=3&&win.rank<4){win.rank=4;refreshName(win,true)}
+  }else{
+   const mv=transferProv(win,lose,ri(2,4));
+   if(lose.rank>0&&Math.random()<0.55){lose.rank--;refreshName(lose,true)}
+   logEv("전쟁 종결",win.name+"이(가) "+lose.name+"에게 승리하고 "
+    +(mv?kfmt(mv)+"km²를 할양받았다":"배상을 받았다")+".","bad","전쟁",true);
+  }
+  /* 나머지 패전국의 전후 처리 */
+  for(const y of L){
+   if(!y.alive||y.id===lose.id)continue;
+   y.stab=clamp(y.stab-16,0,100);
+   if(w.scale==="세계 대전"&&!y.overlord&&Math.random()<0.65){
+    y.overlord=win.id;removeFromWars(y);
+    logEv("전후 처리",win.name+"이(가) 패전국 "+y.name+"을(를) 속령으로 삼았다.","bad","식민",true);
+   }else{
+    const mv=transferProv(win,y,ri(1,2));
+    if(mv)logEv("전후 배상",y.name+"이(가) "+win.name+"에게 "+kfmt(mv)+"km²를 내놓았다.","bad","영토");
+   }
+  }
+  reparations(L.filter(y=>y.alive),win,dur);          /* 연방·연합이 있으면 반드시 배상금을 문다 */
+  if(W.length+L.length>=3)
+   logEv((w.scale||"전쟁")+" 종결",win.name+" 측("+W.length+"개국)이 "+lose.name+" 측("+L.length+"개국)에게 승리했다. "
+    +Math.floor(dur)+"년간 약 "+kfmt(w.dead)+"명이 죽었다.","bad","전쟁",true);
+  return;
+ }
+ const peaceBonus=(isMember(LA)&&isMember(LB))?2.2:1;    /* 연합 가맹국끼리는 빨리 화해한다 */
+ if(dur>10&&Math.abs(w.front)<0.3&&chance(0.06*peaceBonus,dy)){
+  S.wars.splice(idx,1);
+  for(const x of A)for(const y of B)tension(x.id,y.id).ten=45;
+  for(const e of A.concat(B))e.stab=clamp(e.stab+6,0,100);
+  logEv("강화 조약",(w.scale||"전쟁")+"이 "+Math.floor(dur)+"년 만에 끝났다. "
+   +LA.name+" 측과 "+LB.name+" 측이 화해했다.","good","전쟁",true);
+  arbitrationFee(A.concat(B),dur);
+ }
+}
+function birthPerson(e,god,roleForce,quiet,atAge){
+ const age=atAge!==undefined?atAge:ri(19,41);        /* 역사에 등장할 때 이미 어른이다 */
+ const p={id:nextId++,name:pick(PNAME)+" "+genName(),role:roleForce||pick(ROLES),ent:e?e.id:0,
+  bornY:curYear()-age,since:null,life:age+ri(12,44),dead:false,diedY:null,
+  desc:god?"개입으로 등장한 역사적 인물":"시대의 변화 속에서 두각을 나타낸 인물"};
+ S.people.unshift(p);
+ if(S.people.length>320){for(let i=S.people.length-1;i>=0;i--)if(S.people[i].dead){S.people.splice(i,1);break}}
+ if(!quiet)logEv("인물 등장",p.name+"("+age+"세)이(가) "+(e?e.name+"의 ":"")+p.role+"(으)로 역사에 등장했다.",god?"god":"good","인물");
+ return p;
+}
+
+/* ============================================================
+   화면 — 값이 바뀐 곳만 갱신
+   ============================================================ */
+function setTxt(el,v){if(el&&el._v!==v){el._v=v;el.textContent=v}}
+function setHtml(el,v){if(el&&el._h!==v){el._h=v;el.innerHTML=v}}
+function setW(el,v){const s=v.toFixed(1)+"%";if(el._w!==s){el._w=s;el.style.width=s}}
+function setCls(el,v){if(el.className!==v)el.className=v}
+function sync(c,items,keyf,create,update,ordered){
+ if(!c._m)c._m={};
+ const m=c._m,used={};
+ items.forEach((it,i)=>{
+  const k=String(keyf(it));used[k]=1;
+  let el=m[k];
+  if(!el){el=create(it);m[k]=el;c.appendChild(el)}
+  update(el,it,i);
+  if(ordered)el.style.order=i;
+ });
+ for(const k in m)if(!used[k]){m[k].remove();delete m[k]}
+}
+function resetViews(){
+ ["markers","statsBox","flowBox","recent","historyList","civilList","peopleList","warList","relList","empList","unBox"]
+  .forEach(id=>{const c=$(id);if(!c)return;c.innerHTML="";c._m=null;c._seq=0;c._h=null});
+ const pvc=$("provs");if(pvc){pvc.innerHTML="";pvc._m=null}
+ selSig="";
+}
+function updateClock(){
+ setTxt($("year"),yearStr(curYear())+"년");
+ setTxt($("sub"),season()+" · "+era()+" · "+(S.speed?"1분 = "+S.speed+"년":"일시 정지"));
+ $("yearbar").style.width=(yearFrac()*100).toFixed(1)+"%";
+}
+
+/* ---- 사건 피드: 새 사건만 위에 끼워 넣는다 ---- */
+function evNode(e,fresh){
+ const d=document.createElement("div");
+ d.className="ev "+e.type+(fresh?" fresh":"");
+ d.innerHTML='<div class="l1"><time></time><b></b></div><p></p>';
+ d.querySelector("time").textContent=e.date;
+ d.querySelector("b").textContent=e.title;
+ const p=d.querySelector("p");p.textContent=e.desc;p.title=e.desc;
+ return d;
+}
+function fillFeed(c,items,limit){
+ const seq=c._seq||0;
+ const fresh=items.filter(e=>e.seq>seq);
+ if(!fresh.length&&c.childElementCount)return;
+ for(let i=fresh.length-1;i>=0;i--)c.insertBefore(evNode(fresh[i],seq>0),c.firstChild);
+ while(c.childElementCount>limit)c.lastElementChild.remove();
+ c._seq=S.evSeq;
+}
+function renderEvents(){
+ fillFeed($("recent"),S.events.slice(0,40),40);
+ const hist=histFilter==="전체"?S.events:S.events.filter(e=>e.cat===histFilter);
+ fillFeed($("historyList"),hist.slice(0,150),150);
+}
+function setFilter(c){
+ histFilter=c;
+ document.querySelectorAll("#histFilters button").forEach(b=>b.classList.toggle("on",b.dataset.c===c));
+ const h=$("historyList");h.innerHTML="";h._seq=0;renderEvents();
+}
+
+/* ---- KPI ---- */
+const STAT_DEF=[
+ ["세계 인구",()=>kfmt(worldPop()),()=>{const g=S.hist.rate;return (g>=0?"▲":"▼")+" 연 "+kfmt(Math.abs(g))+"명"},()=>S.hist.rate<0,true],
+ ["국가·문명",()=>civs().length+"개"],
+ ["부족",()=>alive().filter(e=>e.rank===0).length+"개"],
+ ["최고 기술",()=>TECHS[worldTech()].n],
+ ["전쟁",()=>S.wars.length+"건"],
+ ["미개척 인구",()=>kfmt(S.wildPop)],
+ ["멸망한 세력",()=>S.entities.filter(e=>!e.alive).length+"개"],
+ ["미개척 토지",()=>kfmt(worldFree())+"km²"],
+ ["세계 총생산",()=>kfmt(alive().reduce((t,e)=>t+incomeOf(e),0))+"펜"],
+ ["국제 연합",()=>S.un?unMembers().length+"개국 가맹":"미창설"]
+];
+function renderFast(){
+ if(!S)return;
+ const A=alive(),C=civs(),wp=worldPop();
+ const dT=S.t-S.hist.lastT;
+ if(dT>0.05){S.hist.rate=(wp-S.hist.lastPop)/dT;S.hist.lastPop=wp;S.hist.lastT=S.t}
+ setTxt($("nameTag"),S.name);
+ setHtml($("status"),"<b>"+S.name+"</b> · "+(C.length?C.length+"개 문명":"문명 이전")
+  +" · 인구 <b>"+kfmt(wp)+"</b> · 기술 <b>"+TECHS[worldTech()].n+"</b>"
+  +(S.wars.length?" · <b style='color:#e09a92'>전쟁 "+S.wars.length+"건</b>":" · 평화")
+  +(S.wars.some(w=>w.scale==="세계 대전")?" · <b style='color:#ff9a8f'>세계 대전 중</b>":
+    S.wars.some(w=>w.scale==="국제 전쟁")?" · <b style='color:#f0c98a'>국제 전쟁 중</b>":"")
+  +(S.ongoing.length?" · <b style='color:#e2c47f'>"+S.ongoing.map(o=>o.n).join(" + ")+"</b>":"")
+  +(federations().length?" · <b style='color:#c5b0e0'>연방 "+federations().length+"개</b>":"")
+  +(S.un?" · <b style='color:#9fd4e8'>국제 연합 "+unMembers().length+"개국</b>":"")
+  +(S.unity?" · <b style='color:#f0cf6e'>세계 통일 "+Math.floor(S.t-S.unity.startT)+"년째 · 권태 "+Math.round(S.unity.decad)+(S.unity.wonders.length?" · 경이 "+S.unity.wonders.length+"개":"")+"</b>":""));
+ setTxt($("mapInfo"),A.length+"개 세력");
+ setTxt($("civCount"),A.length+"개");
+ setTxt($("warCount"),S.wars.length+"건");
+
+ sync($("statsBox"),STAT_DEF,d=>d[0],d=>{
+  const el=document.createElement("div");el.className="kpi"+(d[4]?" wide":"");
+  el.innerHTML='<small></small><b class="num"></b><em></em>';
+  el._l=el.querySelector("small");el._b=el.querySelector("b");el._e=el.querySelector("em");return el;
+ },(el,d)=>{
+  setTxt(el._l,d[0]);setTxt(el._b,d[1]());
+  if(d[2]){setTxt(el._e,d[2]());setCls(el._e,d[3]&&d[3]()?"dn":"")}else setTxt(el._e,"");
+ });
+
+ const fb=$("flowBox");
+ if(!S.ongoing.length){if(fb._m){fb.innerHTML="";fb._m=null;fb._h=null}
+  setHtml(fb,'<div style="color:#7e7a6e;font-size:11px;line-height:1.6">특별한 흐름 없음.<br>역사는 조용히 흐른다.</div>')}
+ else{
+  if(fb._h){fb._h=null;fb.innerHTML="";fb._m=null}
+  sync(fb,S.ongoing,o=>o.n,()=>{
+   const el=document.createElement("div");el.className="fi";
+   el.innerHTML='<div><span class="r"></span><span class="n"></span></div><div class="d"></div><div class="mini"><i></i></div>';
+   el._n=el.querySelector(".n");el._r=el.querySelector(".r");el._d=el.querySelector(".d");el._b=el.querySelector("i");return el;
+  },(el,o)=>{
+   setTxt(el._n,o.n);setTxt(el._r,Math.max(0,Math.round(o.endT-S.t))+"년 남음");
+   setTxt(el._d,o.d);setW(el._b,clamp((S.t-o.startT)/o.len*100,0,100));
+  },true);
+ }
+
+ {const lb=$("lands"),me=$("map"),asp=Math.round(((me&&me.clientWidth)||900)/((me&&me.clientHeight)||450)*10);
+  if(lb._seed!==S.seed||lb._asp!==asp)buildTerrain()}
+ sync($("provs"),S.provs,pv=>pv.id,pv=>{
+  const d=document.createElement("div");
+  d.style.borderRadius=pv.shape||"50%";
+  d.style.aspectRatio=String(pv.ar||1);
+  d.style.transform="translate(-50%,-50%) rotate("+(pv.rot||0)+"deg)";
+  return d;
+ },(d,pv)=>{
+  const o=ent(pv.owner),ov=o?overlordOf(o):null;
+  setCls(d,"prov"+(ov?" col":""));
+  const own=ov||o,fk=own?hueOf(own)+(ov?"c":"n"):"x";
+  if(d._fk!==fk){                                   /* 영토는 나라 고유색, 식민지는 종주국 색 사선무늬 */
+   d._fk=fk;
+   if(!own){d.style.background="#ffffff22";d.style.borderColor="#ffffff44"}
+   else{
+    d.style.background=ov?"repeating-linear-gradient(45deg,"+ncol(own,0.12)+" 0 4px,"+ncol(own,0.45)+" 4px 9px)":ncol(own,0.42);
+    d.style.borderColor=ncol(own,ov?0.9:0.95);
+   }
+  }
+  const sz=(Math.sqrt(pv.area/1000)*2.4*Math.sqrt(pv.ar||1)).toFixed(2)+"%";
+  if(d._sz!==sz){d._sz=sz;d.style.width=sz}
+  const pp=pv.x.toFixed(2)+","+pv.y.toFixed(2);
+  if(d._p!==pp){d._p=pp;d.style.left=pv.x+"%";d.style.top=pv.y+"%"}
+ });
+ sync($("markers"),A,e=>e.id,e=>{
+  const d=document.createElement("div");
+  d.innerHTML='<span></span>';d._s=d.querySelector("span");
+  d.onclick=()=>showDetail(e.id);return d;
+ },(d,e)=>{
+  setCls(d,"marker r"+e.rank+(atWar(e)?" war":"")+(e.plague>0.25?" plague":"")+(S.player===e.id?" me":""));
+  const sz=clamp(8+Math.log10(e.pop+10)*3.6,8,32).toFixed(1)+"px";
+  if(d._sz!==sz){d._sz=sz;d.style.width=sz;d.style.height=sz}
+  const pos=e.x.toFixed(2)+","+e.y.toFixed(2);
+  if(d._p!==pos){d._p=pos;d.style.left=e.x+"%";d.style.top=e.y+"%"}
+  const OVm=overlordOf(e);
+  setTxt(d._s,(OVm?"⚑ ":"")+e.name);
+  const bc=OVm?ncol(OVm,1):ncol(e,1);
+  if(d._bc!==bc){d._bc=bc;d.style.borderColor=bc;d.style.borderStyle=OVm?"dashed":"solid"}
+  const L=leaderOf(e),tt=e.name+(L?" · "+leaderTitle(e)+" "+L.name:"")+(OVm?" · "+OVm.name+"의 식민지":"");
+  if(d.title!==tt)d.title=tt;
+ });
+ setHtml($("warLines"),
+  A.filter(e=>overlordOf(e)).map(e=>{const o=overlordOf(e);
+   return '<line x1="'+o.x+'%" y1="'+o.y+'%" x2="'+e.x+'%" y2="'+e.y+'%" stroke="#d9ae5a99" stroke-width="1.5" stroke-dasharray="2 5"/>'}).join("")
+ +S.wars.map(w=>{
+   const a=ent(w.a),b=ent(w.b);if(!a||!b)return"";
+   const cl=w.sea?"#7fb4d6bb":"#e0564799",ww=w.scale==="세계 대전";
+   let out='<line x1="'+a.x+'%" y1="'+a.y+'%" x2="'+b.x+'%" y2="'+b.y+'%" stroke="'+cl
+    +'" stroke-width="'+(ww?3.2:2)+'" stroke-dasharray="'+(w.sea?"9 4":"5 4")+'"/>';
+   for(const id of w.sa){const m=ent(id);if(m&&m.alive&&id!==w.a)
+    out+='<line x1="'+m.x+'%" y1="'+m.y+'%" x2="'+a.x+'%" y2="'+a.y+'%" stroke="#e8a89a55" stroke-width="1" stroke-dasharray="2 3"/>'}
+   for(const id of w.sb){const m=ent(id);if(m&&m.alive&&id!==w.b)
+    out+='<line x1="'+m.x+'%" y1="'+m.y+'%" x2="'+b.x+'%" y2="'+b.y+'%" stroke="#9ec6dd55" stroke-width="1" stroke-dasharray="2 3"/>'}
+   return out;
+  }).join(""));
+
+ /* 전쟁 — 전선이 계속 움직이므로 빠른 갱신 */
+ const wl=$("warList");
+ if(!S.wars.length){if(wl._m){wl.innerHTML="";wl._m=null;wl._h=null}
+  setHtml(wl,'<div class="empty">진행 중인 전쟁이 없다.</div>')}
+ else{
+  if(wl._h){wl._h=null;wl.innerHTML="";wl._m=null}
+  sync(wl,S.wars,w=>w.id,()=>{
+   const d=document.createElement("div");d.className="wrow";
+   d.innerHTML='<div class="t"></div><div class="tug"><i></i><u></u></div><div class="s"></div>';
+   d._t=d.querySelector(".t");d._b=d.querySelector("i");d._s=d.querySelector(".s");return d;
+  },(d,w)=>{
+   const a=ent(w.a),b=ent(w.b);if(!a||!b)return;
+   const na=w.sa.length,nb=w.sb.length,sc=w.scale||"전쟁";
+   const cls=sc==="세계 대전"?"ww":(sc==="국제 전쟁"?"intl":(w.sea?"sea":"war"));
+   setHtml(d._t,'<span>'+(w.sea?"⚓ ":"")+'<b>'+a.name+'</b>'+(na>1?' +'+(na-1):'')
+    +' vs <b>'+b.name+'</b>'+(nb>1?' +'+(nb-1):'')+'</span><span class="chip '+cls+'">'+sc+'</span>');
+   setW(d._b,(w.front+1)/2*100);
+   setTxt(d._s,Math.floor(S.t-w.startT)+"년째 · "+(w.front>0.05?a.name+" 우세":w.front<-0.05?b.name+" 우세":"교착")
+    +" · "+(w.sea?"해전":"전투")+" "+w.battles+"회 · 전사 "+kfmt(w.dead)
+    +" · 참전 "+(w.sa.length+w.sb.length)+"개국 · "+w.cause);
+   const full=warMembers(w,"a").map(x=>x.name).join(", ")+"  ↔  "+warMembers(w,"b").map(x=>x.name).join(", ");
+   if(d.title!==full)d.title=full;
+  },true);
+ }
+}
+
+/* ---- 목록 ---- */
+function renderSlow(){
+ if(!S)return;
+ const A=alive(),byPop=(x,y)=>y.pop-x.pop;
+ /* 종주국 바로 아래에 그 식민지가 붙도록 정렬한다 */
+ const ORD=[];
+ A.filter(e=>!overlordOf(e)).sort(byPop).forEach(e=>{
+  ORD.push(e);coloniesOf(e).sort(byPop).forEach(c=>ORD.push(c));
+ });
+ for(const e of A)if(ORD.indexOf(e)<0)ORD.push(e);
+ sync($("civilList"),ORD,e=>e.id,e=>{
+  const d=document.createElement("div");d.className="trow";
+  d.innerHTML=
+   '<span class="nm"><i class="dot"></i><span class="t"></span><span class="chips"></span></span>'
+  +'<span class="cell st"></span>'
+  +'<span class="cell ld"><small class="l1"></small><small class="l2"></small></span>'
+  +'<span class="cell tr"><small class="t1"></small><small class="t2"></small></span>'
+  +'<span class="cell"><small class="p"></small><span class="mini"><i></i></span></span>'
+  +'<span class="cell ec"><small class="g1 num"></small><small class="g2 num"></small></span>'
+  +'<span class="cell"><small class="tc"></small><span class="mini tech"><i></i></span></span>'
+  +'<span class="cell"><small class="sv num"></small><span class="mini stab"><i></i></span></span>'
+  +'<span class="cell num ar"></span>';
+  d._dot=d.querySelector(".dot");d._t=d.querySelector(".t");d._c=d.querySelector(".chips");
+  d._st=d.querySelector(".st");d._p=d.querySelector(".p");d._tc=d.querySelector(".tc");
+  d._ld=d.querySelector(".ld");d._l1=d.querySelector(".l1");d._l2=d.querySelector(".l2");
+  d._tr=d.querySelector(".tr");d._t1=d.querySelector(".t1");d._t2=d.querySelector(".t2");
+  d._ec=d.querySelector(".ec");d._g1=d.querySelector(".g1");d._g2=d.querySelector(".g2");
+  d._sv=d.querySelector(".sv");d._ar=d.querySelector(".ar");
+  const bars=d.querySelectorAll(".mini");
+  d._b1=bars[0].firstElementChild;d._b2=bars[1].firstElementChild;d._b3=bars[2].firstElementChild;d._sb=bars[2];
+  d.onclick=()=>showDetail(e.id);return d;
+ },(d,e)=>{
+  const cap=capOf(e),b=bonuses(e);
+  setCls(d._dot,"dot d"+e.rank);
+  const dc=ncol(e,1);if(d._dc!==dc){d._dc=dc;d._dot.style.background=dc;d._dot.style.boxShadow="0 0 0 1px #0008"}
+  const OV=overlordOf(e),COL=coloniesOf(e);
+  setCls(d,"trow clickable"+(OV?" colrow":""));
+  setTxt(d._t,(OV?"└ ":"")+e.name);
+  const tip=e.name+" — "+(e.desc||"")+(OV?" / 종주국: "+OV.name:"")+(COL.length?" / 속령 "+COL.length+"개":"");
+  if(d.title!==tip)d.title=tip;
+  setHtml(d._c,(S.player===e.id?'<span class="chip me">내 나라</span>':e.player?'<span class="chip me">내 세력</span>':'')
+   +(OV?'<span class="chip col">'+(OV.cont!==e.cont?"식민지":"속국")+'</span>':'')
+   +(COL.length?'<span class="chip emp">속령 '+COL.length+'</span>':'')
+   +(atWar(e)?'<span class="chip '+(warsOf(e).some(w=>w.scale==="세계 대전")?"ww":"war")+'">'
+     +(warsOf(e).some(w=>w.scale==="세계 대전")?"세계 대전":warsOf(e).some(w=>w.sea)?"해전":"전쟁")+'</span>':'')
+   +(e.plague>0.25?'<span class="chip pl">역병</span>':'')
+   +(e.famine>0.4?'<span class="chip pl">기근</span>':'')
+   +(goldOf(e)<0?'<span class="chip war">재정 위기</span>':'')
+   +(isMember(e)?'<span class="chip un">연합</span>':''));
+  setTxt(d._st,RANKS[e.rank]);
+  const L=leaderOf(e);
+  setTxt(d._l1,L?leaderTitle(e)+" "+L.name:"공위");
+  setCls(d._l1,"l1"+(L?"":" vac"));
+  setTxt(d._l2,L?"재위 "+reignOf(L)+"년 · "+Math.floor(curYear()-L.bornY)+"세":"후계를 기다린다");
+  const lt=L?leaderTitle(e)+" "+L.name:"지도자 공위";
+  if(d._ld.title!==lt)d._ld.title=lt;
+  setTxt(d._t1,kfmt(landOf(e))+"km²");
+  setTxt(d._t2,"속주 "+provsOf(e).length+"개"+(canSail(e)?" · 해군 "+kfmt(navyOf(e,b)):""));
+  const ptip=provsOf(e).map(x=>x.name).join(", ");
+  if(d._tr.title!==ptip)d._tr.title=ptip;
+  setTxt(d._p,kfmt(e.pop)+" / "+kfmt(cap));
+  const ec=econOf(e),g=goldOf(e);
+  setTxt(d._g1,(g<0?"-":"")+kfmt(Math.abs(g))+"펜");
+  setCls(d._g1,"g1 num"+(g<0?" neg":""));
+  setTxt(d._g2,(ec.net>=0?"연 +":"연 -")+kfmt(Math.abs(ec.net)));
+  setCls(d._g2,"g2 num"+(ec.net<0?" neg":""));
+  if(d._ec.title!==("수입 "+fmt(ec.inc)+" / 지출 "+fmt(ec.ex)+" / 교역로 "+tradeCount(e)+"개"))
+   d._ec.title="수입 "+fmt(ec.inc)+" / 지출 "+fmt(ec.ex)+" / 교역로 "+tradeCount(e)+"개";
+  setW(d._b1,clamp(e.pop/cap*100,0,100));
+  setTxt(d._tc,TECHS[e.tech].n);
+  setW(d._b2,clamp(e.techPts/techNeed(e.tech)*100,0,100));
+  setTxt(d._sv,e.stab.toFixed(0));
+  setW(d._b3,e.stab);
+  setCls(d._sb,"mini stab"+(e.stab<30?" low":""));
+  setTxt(d._ar,kfmt(armyOf(e)*b.army));
+ },true);
+
+ sync($("peopleList"),S.people.slice(0,50),p=>p.id,()=>{
+  const d=document.createElement("div");d.className="prow";
+  d.innerHTML='<span class="t"></span><span class="s"></span>';
+  d._t=d.querySelector(".t");d._s=d.querySelector(".s");return d;
+ },(d,p)=>{
+  const e=ent(p.ent),age=Math.floor((p.dead?p.diedY:curYear())-p.bornY);
+  setCls(d,"prow"+(p.dead?" dead":""));
+  const isL=!!(e&&e.alive&&e.leader===p.id&&!p.dead);
+  setHtml(d._t,'<b>'+p.name+'</b> <span class="chip'+(isL?' me':'')+'">'+(isL?leaderTitle(e):p.role)+'</span>'+(e?' <span class="chip">'+e.name+'</span>':''));
+  setTxt(d._s,(p.dead?"사망 "+age+"세":age+"세")+" · "+yearStr(p.bornY)+"년생");
+ },true);
+
+ /* 식민 제국 — 종주국별로 따로 모아 보여준다 */
+ const emps=A.filter(e=>coloniesOf(e).length);
+ const colLand=e=>coloniesOf(e).reduce((t,c)=>t+landOf(c),0);
+ emps.sort((x,y)=>(landOf(y)+colLand(y))-(landOf(x)+colLand(x)));
+ setTxt($("empCount"),emps.length?emps.length+"개 제국":"없음");
+ const epl=$("empList");
+ if(!emps.length){if(epl._m){epl.innerHTML="";epl._m=null;epl._h=null}
+  setHtml(epl,'<div class="empty">아직 다른 나라를 지배하는 제국이 없다.</div>')}
+ else{
+  if(epl._h){epl._h=null;epl.innerHTML="";epl._m=null}
+  sync(epl,emps,e=>e.id,()=>{
+   const d=document.createElement("div");d.className="erow";
+   d.innerHTML='<div class="t"></div><div class="c"></div>';
+   d._t=d.querySelector(".t");d._c=d.querySelector(".c");return d;
+  },(d,e)=>{
+   const cs=coloniesOf(e),own=landOf(e),cl=colLand(e);
+   setHtml(d._t,'<b>'+e.name+'</b> <span class="chip emp">속령 '+cs.length+'</span>'
+    +'<span style="float:right;color:#8d8878;font-size:10px">본국 '+kfmt(own)+' + 식민지 '+kfmt(cl)+' = '+kfmt(own+cl)+'km²</span>');
+   setHtml(d._c,cs.map(c=>'└ '+c.name+' <span class="chip'+(c.cont!==e.cont?" col":"")+'">'
+    +(c.cont!==e.cont?"해외":"속국")+'</span> '+kfmt(landOf(c))+'km² · 안정 '+c.stab.toFixed(0)
+    +(S.wars.some(w=>w.indep&&inWar(w,c))?' <span class="chip war">독립 전쟁</span>':'')).join("<br>"));
+  },true);
+ }
+ /* 국제 연합 */
+ const ub=$("unBox");
+ if(!S.un){
+  if(ub._m||ub._built){ub.innerHTML="";ub._m=null;ub._built=0}
+  setTxt($("unCount"),"미창설");
+  setHtml(ub,'<div class="empty">아직 국제 연합이 없다. 왕국 이상 3개국과 인쇄술 시대의 기술이 모이면 창설된다. 가맹국이 2개국 이하로 줄면 해체된다.<br>개입의 <b>국제 연합</b>에서 바로 세울 수도 있다.</div>');
+ }else{
+  const ms=unMembers(),host=ent(S.un.host);
+  setTxt($("unCount"),ms.length+"개국 · 기금 "+kfmt(S.un.fund)+"펜");
+  if(!ub._built){                                   /* 틀은 한 번만 만들고 값만 바꾼다 */
+   ub.innerHTML='<div class="unhead"><b class="f1"></b> · 가맹 <b class="f2"></b><br>'
+    +'의장국 <b class="f3"></b> · 기금 <b class="f4"></b><br><span class="f5"></span></div>'
+    +'<div class="reslist"></div>';
+   ub._built=1;ub._f1=ub.querySelector(".f1");ub._f2=ub.querySelector(".f2");
+   ub._f3=ub.querySelector(".f3");ub._f4=ub.querySelector(".f4");ub._f5=ub.querySelector(".f5");
+   ub._rl=ub.querySelector(".reslist");
+  }
+  setTxt(ub._f1,S.un.founded+"년 창설");
+  setTxt(ub._f2,ms.length+"개국");
+  setTxt(ub._f3,host?host.name:"공석");
+  setTxt(ub._f4,kfmt(S.un.fund)+"펜");
+  setTxt(ub._f5,ms.map(e=>e.name).join(", ")||"가맹국 없음");
+  sync(ub._rl,S.un.res,r=>r.date+"|"+r.title+"|"+r.desc,r=>{
+   const d=document.createElement("div");d.className="unrow";
+   d.innerHTML='<time></time><b></b><div></div>';
+   d.querySelector("time").textContent=r.date+"년";
+   d.querySelector("b").textContent=r.title;
+   d.querySelector("div").textContent=r.desc;
+   return d;
+  },()=>{},true);
+  if(!S.un.res.length&&!ub._rl.childElementCount)
+   ub._rl.innerHTML='<div class="unrow"><b>결의 없음</b><div>아직 통과된 결의가 없다.</div></div>';
+ }
+ const rels=[];
+ for(let i=0;i<A.length;i++)for(let j=i+1;j<A.length;j++){
+  const k=relKey(A[i].id,A[j].id),R=S.rel[k];
+  if(R)rels.push({k:k,a:A[i],b:A[j],R:R});
+ }
+ rels.sort((x,y)=>y.R.ten-x.R.ten);
+ const top=rels.slice(0,24),rl=$("relList");
+ if(!top.length){if(rl._m){rl.innerHTML="";rl._m=null;rl._h=null}
+  setHtml(rl,'<div class="empty">관계 기록이 없다.</div>')}
+ else{
+  if(rl._h){rl._h=null;rl.innerHTML="";rl._m=null}
+  sync(rl,top,x=>x.k,()=>{
+   const d=document.createElement("div");d.className="rrow";
+   d.innerHTML='<div class="t"></div><div class="mini"><i></i></div>';
+   d._t=d.querySelector(".t");d._b=d.querySelector("i");d._w=d.querySelector(".mini");return d;
+  },(d,x)=>{
+   setHtml(d._t,x.a.name+" ↔ "+x.b.name
+    +(x.R.ally?' <span class="chip ally">동맹</span>':'')+(x.R.trade?' <span class="chip">교역</span>':'')
+    +' <span style="float:right;color:#8d8878;font-size:10px">긴장 '+x.R.ten.toFixed(0)+'</span>');
+   setW(d._b,x.R.ten);
+   setCls(d._w,"mini"+(x.R.ten>70?" low":""));
+  },true);
+ }
+ fillTargets();
+ renderPlayer();
+}
+function renderAll(){renderFast();renderSlow();renderEvents();updateClock()}
+
+function showDetail(id){
+ const e=ent(id);if(!e)return;
+ const b=bonuses(e),cap=capOf(e);
+ const ppl=S.people.filter(p=>p.ent===id&&!p.dead);
+ const wars=warsOf(e);
+ const L=leaderOf(e),OV=overlordOf(e),COL=coloniesOf(e),EC=econOf(e);
+ $("detailBody").innerHTML='<h2>'+e.name+'</h2>'
+ +'<div style="color:#8d8878;font-size:12px">'+RANKS[e.rank]+' · '+GOVS[e.gov]+' · '+CONTINENTS[e.cont].name+' · '+e.founded+'년 성립</div>'
+ +'<p style="color:#a7a294;font-size:12.5px">'+(e.desc||"-")+'</p>'
+ +'<div class="kv">'
+ +'<div><span>'+leaderTitle(e)+'</span>'+(L?L.name+" (재위 "+reignOf(L)+"년, "+Math.floor(curYear()-L.bornY)+"세)":"공위 — 후계자가 없다")+'</div>'
+ +'<div><span>인구 / 수용 한계</span>'+fmt(e.pop)+' / '+fmt(cap)+'</div>'
+ +'<div><span>기술</span>'+TECHS[e.tech].n+'</div>'
+ +'<div><span>안정도</span>'+e.stab.toFixed(0)+'</div>'
+ +'<div><span>군사력</span>'+fmt(armyOf(e)*b.army)+'</div>'
+ +'<div><span>영토</span>'+fmt(landOf(e))+'km² · 속주 '+provsOf(e).length+'개</div>'
+ +'<div><span>해군력</span>'+(canSail(e)?fmt(navyOf(e)):"없음 (항해술 필요)")+'</div>'
+ +'<div><span>국고</span>'+fmt(goldOf(e))+'펜'+(goldOf(e)<0?" (재정 위기)":"")+'</div>'
+ +'<div><span>연 수입 / 지출</span>'+fmt(EC.inc)+' / '+fmt(EC.ex)+' (순 '+(EC.net>=0?"+":"")+fmt(EC.net)+')</div>'
+ +'<div><span>교역로</span>'+tradeCount(e)+'개</div>'
+ +'<div><span>국제 연합</span>'+(isMember(e)?"가맹국"+(S.un&&S.un.host===e.id?" · 의장국":""):(S.un?"미가맹":"미창설"))+'</div>'
+ +(isHegemon(e)?'<div><span>세계 통일</span>'+Math.floor(S.t-S.unity.startT)+'년째 · 권태 '+Math.round(S.unity.decad)+' · 경이 '+(S.unity.wonders.join(", ")||"없음")+'</div>':'')
+ +'<div><span>역병</span>'+(e.plague>0.05?(e.plague*100).toFixed(0)+"%":"없음")+'</div>'
+ +'<div><span>기근</span>'+(e.famine>0.05?(e.famine*100).toFixed(0)+"%":"없음")+'</div>'
+ +'</div>'
+ +'<div class="field"><label>속주 ('+provsOf(e).length+'개 · '+fmt(landOf(e))+'km²)</label><div style="color:#8d8878;font-size:12px">'
+ +(provsOf(e).map(x=>x.name+" "+kfmt(x.area)+"km²").join(" · ")||"없음")+'</div></div>'
+ +'<div class="field"><label>식민 관계</label><div style="color:#8d8878;font-size:12px">'
+ +(OV?("종주국 "+OV.name+" — "+(OV.cont!==e.cont?"해외 식민지":"속국")+"다."):"독립국이다.")
+ +(COL.length?(" 속령: "+COL.map(c=>c.name+(c.cont!==e.cont?"(해외)":"")).join(", ")):"")+'</div></div>'
+ +'<div class="field"><label>생존 인물 ('+ppl.length+'명)</label><div style="color:#8d8878;font-size:12px">'+(ppl.map(p=>p.name+" ("+p.role+")").join(", ")||"없음")+'</div></div>'
+ +'<div class="field"><label>진행 중 전쟁</label><div style="color:#8d8878;font-size:12px">'+(wars.map(w=>{
+  const mine=w.sa.indexOf(id)>=0?"a":"b",foe=mine==="a"?"b":"a";
+  return (w.scale||"전쟁")+": "+warMembers(w,foe).map(x=>x.name).join(", ")+" 상대";
+ }).join(" / ")||"없음")+'</div></div>'
+ +'<div class="mbtns"><button class="btn" onclick="closeAll()">닫기</button>'
+ +(S.player===id?'<button class="btn gold" disabled>다스리는 중</button>':'<button class="btn gold" onclick="pTakeId('+id+')">이 나라를 다스린다</button>')+'</div>';
+ $("detail").style.display="flex";
+}
+
+/* ---------- 조작 ---------- */
+function jump(id){const el=$(id);if(el&&el.scrollIntoView)el.scrollIntoView({behavior:"smooth",block:"start"})}
+function fillTargets(){
+ const A=alive(),sig=A.map(e=>e.id+":"+e.name+":"+e.rank).join("|");
+ if(sig!==selSig){
+  selSig=sig;
+  const opts=A.map(e=>'<option value="'+e.id+'">'+e.name+' ('+RANKS[e.rank]+')</option>').join("");
+  ["pt","wa","wd","rv","tt","pe","ca","cb","dp","pk"].forEach(id=>{
+   const x=$(id);if(!x)return;const keep=x.value;x.innerHTML=opts;
+   if(keep&&A.some(e=>String(e.id)===keep))x.value=keep;
+  });
+ }
+ if(!$("nr").childElementCount){
+  $("nr").innerHTML=CONTINENTS.map((c,i)=>'<option value="'+i+'">'+c.name+'</option>').join("");
+  $("nt").innerHTML=RANKS.map((r,i)=>'<option value="'+i+'">'+r+'</option>').join("");
+  $("pr").innerHTML=ROLES.map(r=>'<option>'+r+'</option>').join("");
+  $("dc").innerHTML='<option value="-1">세계 전체</option>'+CONTINENTS.map((c,i)=>'<option value="'+i+'">'+c.name+'</option>').join("");
+ }
+}
+function setSpeed(v){
+ S.speed=v;
+ document.querySelectorAll("#speedBar button").forEach(b=>b.classList.toggle("on",+b.dataset.v===v));
+ updateClock();if(v>0)start();
+}
+function openModal(id){fillTargets();$(id).style.display="flex"}
+function closeAll(){document.querySelectorAll(".overlay").forEach(x=>x.style.display="none")}
+function toast(msg){const t=$("toast");t.textContent=msg;t.classList.add("on");clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove("on"),2200)}
+
+function createWorld(){
+ newWorldState($("wn").value||"무명의 세계",+$("wy").value||0,+$("wt").value);
+ closeAll();resetViews();setSpeed(1);renderAll();toast("새로운 세계가 열렸다");
+}
+function addNation(){
+ const rank=+$("nt").value;
+ const e=makeEntity({base:stripSuffix($("nn").value)||genName(),rank:rank,cont:+$("nr").value,desc:$("nd").value,
+  player:true,gov:rank===0?0:1,tech:Math.max(worldTech(),RANK_REQ[rank].t),
+  pop:Math.max(RANK_REQ[rank].p*1.1,worldPop()*0.08)});
+ S.entities.push(e);
+ grantHome(e);
+ for(let i=0;i<Math.min(3,rank);i++){const f=freeArea(e.cont);if(f>12000)addProv(e,e.cont,Math.min(f,ri(14,30)*1000),false)}
+ appointLeader(e);
+ logEv("새로운 세력 등장",e.name+"이(가) "+CONTINENTS[e.cont].name+"에 세워졌다.","god","개입",true);
+ if(!playerEnt()){S.player=e.id;logEv("통치 시작","플레이어가 "+e.name+"을(를) 다스리기 시작했다.","god","개입",true)}
+ closeAll();renderAll();toast(e.name+" 추가");
+}
+function doPlague(){
+ const e=ent(+$("pt").value);if(!e)return;
+ outbreak(e,+$("ps").value,false);e.stab=clamp(e.stab-10,0,100);
+ closeAll();renderAll();toast("역병이 퍼지기 시작했다");
+}
+function doDisaster(){
+ const type=$("dt").value,p=+$("ds").value,c=+$("dc").value;
+ const targets=alive().filter(e=>c<0||e.cont===c);
+ for(const e of targets){e.pop*=(1-p);e.stab=clamp(e.stab-p*60,0,100);e.famine=clamp(e.famine+p*2,0,1)}
+ if(c<0)S.wildPop*=(1-p);
+ logEv(type,(c<0?"세계 전역":CONTINENTS[c].name)+"에 "+type+"이(가) 발생해 "+targets.length+"개 세력이 피해를 입었다.","god","재해",true);
+ closeAll();renderAll();toast(type+" 발생");
+}
+function doWar(){
+ const a=ent(+$("wa").value),b=ent(+$("wd").value);
+ if(!a||!b||a.id===b.id){toast("서로 다른 두 세력을 선택하라");return}
+ if(S.wars.some(w=>inWar(w,a)&&inWar(w,b))){toast("이미 같은 전쟁에 들어가 있다");return}
+ if(a.cont!==b.cont&&!canSail(a)){toast("바다를 건널 배가 없다 — 공격 측에 항해술이 필요하다");return}
+ if(a.overlord){toast("식민지·속국은 전쟁을 일으킬 수 없다 — 먼저 독립시켜라");return}
+ const ovB=overlordOf(b);
+ if(ovB&&ovB.id===a.id){toast("자기 식민지와는 싸울 수 없다 — 식민 지배에서 독립시켜라");return}
+ if(!startWar(a,b,"신의 개입")){toast("전쟁을 일으킬 수 없다");return}
+ if(ovB)toast(b.name+"은(는) "+ovB.name+"의 식민지다 — 종주국과의 전쟁이 되었다");
+ closeAll();renderAll();
+ toast(a.cont!==b.cont?"해상 전쟁이 시작되었다":"전쟁이 시작되었다");
+}
+function doRevolution(){
+ const e=ent(+$("rv").value),k=$("rk").value;if(!e)return;
+ e.pop*=0.92;e.stab=clamp(e.stab-25,0,100);
+ if(k==="독립 혁명"||k==="왕정 전복")e.gov=3;
+ else if(k==="군사 쿠데타"){e.gov=1;e.armyMul=Math.min(2,e.armyMul+0.2)}
+ else if(k==="종교 혁명")e.gov=2;else e.gov=5;
+ ousted(e);refreshName(e);
+ logEv("혁명 발생",e.name+"에서 "+k+"이 일어나 체제가 "+GOVS[e.gov]+"로 바뀌었다.","god","개입",true);
+ closeAll();renderAll();toast(k+" 발생");
+}
+function bless(){
+ S.wildPop*=1.08;
+ for(const e of alive()){e.pop*=1.08;e.stab=clamp(e.stab+12,0,100);e.plague=0;e.famine=0;e.techPts+=10;e.gold=goldOf(e)+incomeOf(e)*2;e.debt=false}
+ logEv("세계의 축복","풍년과 번영이 찾아와 모든 세력의 인구와 안정이 회복되었다.","god","개입",true);
+ renderAll();toast("세계에 축복이 내렸다");
+}
+function doPerson(){birthPerson(ent(+$("pe").value),true,$("pr").value);closeAll();renderAll();toast("인물이 탄생했다")}
+function doTech(){
+ const e=ent(+$("tt").value);if(!e)return;
+ if(e.tech>=TECHS.length-1){toast("더 전수할 기술이 없다");return}
+ e.tech++;e.techPts=0;
+ logEv("기술 전수",e.name+"이(가) 개입을 통해 '"+TECHS[e.tech].n+"'을(를) 얻었다.","god","개입",true);
+ closeAll();renderAll();toast(TECHS[e.tech].n+" 전수");
+}
+function doColony(){
+ const a=ent(+$("ca").value),b=ent(+$("cb").value);
+ if(!a||!b||a.id===b.id){toast("서로 다른 두 나라를 선택하라");return}
+ if(b.overlord===a.id){toast("이미 지배하고 있다");return}
+ b.overlord=a.id;b.stab=clamp(b.stab-15,0,100);removeFromWars(b);
+ const mv=transferProv(a,b,1),oversea=a.cont!==b.cont;
+ if(a.rank>=3&&a.rank<4){a.rank=4;refreshName(a,true)}
+ logEv(oversea?"식민 지배":"속국화",
+  a.name+"이(가) 개입으로 "+b.name+"을(를) "+(oversea?"해외 식민지":"속국")+"(으)로 삼았다."
+  +(mv?" ("+kfmt(mv)+"km² 할양)":""),"god","식민",true);
+ closeAll();renderAll();toast(b.name+" 지배");
+}
+function doFree(){
+ const b=ent(+$("cb").value);if(!b)return;
+ if(!b.overlord){toast("이미 독립국이다");return}
+ const o=ent(b.overlord);b.overlord=null;b.stab=clamp(b.stab+12,0,100);
+ logEv("독립 승인",(o?o.name:"종주국")+"이(가) "+b.name+"의 독립을 인정했다.","god","식민",true);
+ closeAll();renderAll();toast(b.name+" 독립");
+}
+function unForce(){
+ if(S.un){toast("이미 창설되어 있다");return}
+ if(!foundUN(true)){toast("연합을 세울 나라가 부족하다 — 도시 국가 이상 3개국이 필요하다");return}
+ closeAll();renderAll();toast("국제 연합이 창설되었다");
+}
+function unCall(){
+ if(!S.un){toast("먼저 국제 연합을 창설하라");return}
+ unAction();closeAll();renderAll();toast("결의가 통과되었다");
+}
+function unPeace(){
+ if(!S.un){toast("먼저 국제 연합을 창설하라");return}
+ if(!S.wars.length){toast("진행 중인 전쟁이 없다");return}
+ const n=S.wars.length;
+ for(let i=S.wars.length-1;i>=0;i--){
+  const w=S.wars[i],A=warMembers(w,"a"),B=warMembers(w,"b"),LA=ent(w.a),LB=ent(w.b);
+  S.wars.splice(i,1);
+  for(const x of A)for(const y of B)tension(x.id,y.id).ten=32;
+  reparations(w.front>0?B:A,w.front>0?LA:LB,S.t-w.startT);
+ }
+ unRes("전면 정전 결의",n+"건의 전쟁을 모두 중단시키고 배상을 매겼다.");
+ closeAll();renderAll();toast("모든 전쟁이 중단되었다");
+}
+function forcePeace(){
+ if(!S.wars.length){toast("진행 중인 전쟁이 없다");return}
+ const n=S.wars.length;S.wars=[];
+ for(const k in S.rel)S.rel[k].ten=Math.min(S.rel[k].ten,25);
+ for(const e of alive())e.stab=clamp(e.stab+10,0,100);
+ logEv("평화 선포",n+"건의 전쟁이 즉시 종결되고 세계의 긴장이 가라앉았다.","god","개입",true);
+ renderAll();toast("모든 전쟁이 끝났다");
+}
+
+/* ---------- 세계 통일: 식민지를 빼고 독립국이 하나만 남으면 ---------- */
+const WONDERS=["하늘의 탑","대운하","만리 성벽","태양 신전","대도서관","거대 등대","황금 궁전","왕립 천문대","대경기장","영원의 능묘"];
+function hegemon(){return S.unity?ent(S.unity.ent):null}
+function isHegemon(e){return !!(S&&S.unity&&e&&S.unity.ent===e.id)}
+/* 작은 부족(인구 3천 미만)은 '나라'로 치지 않고, 반란국·야만족은 세워진 지 15년이 지나야 경쟁국으로 친다 */
+function isCountry(e){return !e.overlord&&!(e.rank===0&&e.pop<3000)}
+function unityRivals(h){return alive().filter(o=>o.id!==h.id&&isCountry(o)&&S.t-(o.foundedT||0)>=15)}
+function checkUnity(dy){
+ if(S.unity){
+  const h=hegemon();
+  if(!h||!h.alive||h.overlord)endUnity("패권국이 무너져");
+  else if(unityRivals(h).length)endUnity("새 독립국이 자리를 잡아");
+  else unityTick(h,dy);
+  return;
+ }
+ const ind=alive().filter(isCountry);
+ if(ind.length===1&&S.entities.length>=2&&S.t>=(S.unityCd||0))declareUnity(ind[0]);
+}
+function declareUnity(e){
+ S.unityCount=(S.unityCount||0)+1;
+ S.unity={ent:e.id,startT:S.t,decad:0,wonders:[]};
+ e.stab=clamp(e.stab+15,0,100);
+ refreshName(e,true);
+ for(const k in S.rel)S.rel[k].ten=Math.min(S.rel[k].ten,20);
+ const cols=coloniesOf(e).length;
+ logEv("세계 통일",e.name+"이(가) 마지막 경쟁국을 꺾고 세계를 통일했다"+(cols?" (속령 "+cols+"개)":"")+". "
+  +(S.unityCount>1?S.unityCount+"번째 통일이다.":"역사상 최초의 통일이다.")+" 이제 권태와 부패가 제국을 시험한다.","god","통일",true);
+ if(S.unityCount===1||(S.player===e.id&&!S.unityWon)){if(S.player===e.id)S.unityWon=true;showUnity(e)}   /* 첫 통일과 플레이어의 첫 승리만 화면을 띄운다 */
+ else toast(e.name+"이(가) 세계를 다시 통일했다");
+}
+function endUnity(why){
+ const h=hegemon(),U=S.unity;S.unity=null;S.unityCd=S.t+25;
+ if(h&&h.alive)refreshName(h,true);
+ logEv("통일 시대의 종말",why+" "+Math.floor(S.t-U.startT)+"년간 이어진 통일 시대가 막을 내렸다. 세계는 다시 전국 시대로 들어간다.","bad","통일",true);
+}
+function unityTick(h,dy){
+ const U=S.unity,dur=S.t-U.startT;
+ U.decad=clamp(U.decad+dy*(0.35+landOf(h)/600000+coloniesOf(h).length*0.05)-(h.stab>75?dy*0.12:0),0,100);
+ if(chance(0.09,dy))unityEvent(h);
+ if(h.stab<20&&dur>8&&chance(0.2,dy))imperialCollapse(h);
+}
+function splitOff(h,n,desc,govv){                       /* 제국에서 속주 몇 개가 떨어져 나와 새 나라가 된다 */
+ const ps=provsOf(h).filter(p=>!/본토$/.test(p.name));
+ if(!ps.length)return null;
+ ps.sort((a,b)=>b.area-a.area);
+ const c0=ps[0].cont,take=ps.filter(p=>p.cont===c0).slice(0,n);
+ const share=take.reduce((t,p)=>t+p.area,0)/Math.max(1,landOf(h));
+ const nE=makeEntity({cont:c0,base:genName(),rank:Math.max(0,h.rank-1),tech:h.tech,pop:Math.max(500,h.pop*share*0.9),
+  gov:govv!==undefined?govv:h.gov,desc:desc,gold:Math.max(0,goldOf(h))*share});
+ nE.x=take[0].x;nE.y=take[0].y;
+ h.pop*=(1-share*0.9);h.gold=goldOf(h)-Math.max(0,goldOf(h))*share;
+ S.entities.push(nE);
+ for(const p of take)p.owner=nE.id;
+ take[0].name=nE.base+" 본토";
+ appointLeader(nE);
+ return nE;
+}
+function unityEvent(h){
+ const U=S.unity,provs=provsOf(h).length,cols=coloniesOf(h),list=[];
+ const add=(w,f)=>list.push({w:w,f:f});
+ if(provs>=3)add(3+U.decad/25,()=>{                                   /* 총독의 반란 */
+  const r=splitOff(h,ri(1,2),"총독이 제국에 맞서 세운 반란국",1);if(!r)return;
+  r.stab=clamp(h.stab+10,30,90);r.armyMul=1.4;tension(h.id,r.id).ten=100;
+  logEv("총독의 반란",h.name+"의 총독이 "+r.name+"을(를) 세우고 독립을 선언했다. (영토 "+kfmt(landOf(r))+"km²)","bad","통일",true);
+  startWar(r,h,"반란");
+ });
+ add(2,()=>{                                                           /* 야만족의 대이동 */
+  const pop=Math.max(3000,S.wildPop*0.6,h.pop*0.08),C=CONTINENTS[h.cont];
+  const b=makeEntity({cont:h.cont,base:genName(),rank:h.rank>=2?1:0,tech:Math.max(0,h.tech-3),pop:pop,gov:1,desc:"변경 너머에서 몰려온 기마 민족"});
+  b.armyMul=2;b.stab=70;S.wildPop=Math.max(0,S.wildPop-pop*0.5);
+  S.entities.push(b);grantHome(b);appointLeader(b);
+  logEv("야만족의 대이동",fmt(Math.round(pop))+"명의 기마 민족이 "+C.name+" 변경을 넘어 "+b.name+"(으)로 뭉쳐 "+h.name+"을(를) 덮쳤다.","bad","통일",true);
+  startWar(b,h,"대침입");
+ });
+ if(provs>=4)add(1.5+U.decad/40,()=>{                                 /* 계승 분쟁 */
+  const L=leaderOf(h);if(L){L.dead=true;L.diedY=curYear();h.leader=null}
+  const parts=[];for(let i=0,n=ri(2,3);i<n;i++){const r=splitOff(h,ri(1,2),"계승 분쟁으로 갈라져 나온 나라");if(r)parts.push(r)}
+  if(!parts.length)return;
+  for(const r of parts){tension(h.id,r.id).ten=90;for(const q of parts)if(q!==r)tension(r.id,q.id).ten=80}
+  h.stab=clamp(h.stab-15,0,100);
+  logEv("계승 분쟁",h.name+"의 "+leaderTitle(h)+"이(가) 후계 없이 죽자 제국이 "+parts.map(r=>r.name).join(", ")+"(으)로 갈라졌다.","bad","통일",true);
+ });
+ add(3,()=>{                                                           /* 대건축 */
+  const left=WONDERS.filter(w=>U.wonders.indexOf(w)<0);if(!left.length)return;
+  const w=pick(left),cost=incomeOf(h)*1.5;payFrom(h,cost);U.wonders.push(w);
+  h.stab=clamp(h.stab+8,0,100);h.techPts+=techNeed(h.tech)*0.2;U.decad=Math.max(0,U.decad-5);
+  logEv("대건축 — "+w,h.name+"이(가) "+kfmt(cost)+"펜을 들여 '"+w+"'을(를) 세웠다. 세계의 경이가 "+U.wonders.length+"개가 되었다.","god","통일",true);
+ });
+ add(3,()=>{                                                           /* 사치와 부패 */
+  const cost=incomeOf(h)*1.2;payFrom(h,cost);U.decad=clamp(U.decad+12,0,100);h.stab=clamp(h.stab-5,0,100);
+  logEv("궁정의 사치",h.name+"의 궁정이 사치에 빠져 "+kfmt(cost)+"펜을 탕진했다. 관리들의 부패가 깊어진다.","bad","통일");
+ });
+ add(2,()=>{                                                           /* 번영의 해 */
+  h.stab=clamp(h.stab+10,0,100);h.techPts+=techNeed(h.tech)*0.3;U.decad=Math.max(0,U.decad-12);h.gold=goldOf(h)+incomeOf(h);
+  logEv("팍스 — 번영의 해",h.name+"의 평화 아래 학문과 상업이 꽃폈다. 권태가 잠시 걷힌다.","good","통일",true);
+ });
+ add(2,()=>{outbreak(h,rnd(.5,.9),false);                              /* 대역병 */
+  logEv("제국 대역병","하나로 이어진 세상의 길을 따라 역병이 "+h.name+" 전역으로 번졌다.","bad","통일",true)});
+ add(2,()=>{                                                           /* 종교 분열 */
+  h.stab=clamp(h.stab-12,0,100);U.decad=clamp(U.decad+6,0,100);
+  logEv("종교 분열",h.name+"에서 새 교파가 일어나 백성이 둘로 갈라졌다.","bad","통일",true);
+ });
+ if(cols.length)add(2+U.decad/30,()=>{                                /* 속령 대봉기 */
+  let n=0;for(const c of cols)if(c.stab<65&&n<2&&!S.wars.some(w=>inWar(w,c))){startIndepWar(c,h);n++}
+  if(n)logEv("속령 대봉기",h.name+"의 속령 "+n+"곳이 한꺼번에 독립의 기치를 들었다.","bad","통일",true);
+ });
+ add(1,()=>{                                                           /* 탐험 */
+  if(worldFree()>16000&&(canSail(h)?overseaColony(h):claimProv(h)))return;
+  h.techPts+=techNeed(h.tech)*0.25;
+  logEv("세상 끝 탐험",h.name+"의 탐험대가 세상의 끝을 보고 돌아와 새로운 지식을 전했다.","good","통일");
+ });
+ const tot=list.reduce((t,x)=>t+x.w,0);let r=Math.random()*tot;
+ for(const x of list){r-=x.w;if(r<=0){x.f();return}}
+}
+function imperialCollapse(h){
+ const parts=[],n=Math.min(4,Math.max(2,Math.floor(provsOf(h).length/2)));
+ for(let i=0;i<n;i++){const r=splitOff(h,ri(1,2),h.name+"의 폐허 위에 선 후계국",pick([1,2,3]));if(r)parts.push(r)}
+ for(const c of coloniesOf(h)){c.overlord=null;c.stab=clamp(c.stab+10,0,100)}
+ ousted(h);h.stab=clamp(h.stab+20,0,100);h.pop*=0.9;
+ if(h.rank>1){h.rank--}
+ for(const r of parts){tension(h.id,r.id).ten=85;for(const q of parts)if(q!==r)tension(r.id,q.id).ten=75}
+ logEv("제국의 붕괴",h.name+"이(가) 권태와 부패 끝에 무너졌다. "+(parts.length?parts.map(r=>r.name).join(", ")+"이(가) 갈라져 나오고 ":"")+"속령들이 모두 독립했다.","bad","통일",true);
+}
+function showUnity(e){
+ const me=playerEnt(),mine=S.player===e.id;
+ setTxt($("unityTitle"),mine?"승리 — 세계 통일":(me?"세계 통일 — 당신의 나라는 속령이 되었다":"세계 통일"));
+ const L=leaderOf(e);
+ $("unityBody").innerHTML='<p><b style="color:#f0cf6e;font-size:15px">'+e.name+'</b>이(가) '+yearStr(curYear())+'년, 세계의 마지막 경쟁국을 꺾고 천하를 통일했다.'+(S.unityCount>1?' ('+S.unityCount+'번째 통일)':'')+'</p>'
+ +'<div class="kv"><div><span>통일까지</span>'+Math.floor(S.t)+'년</div><div><span>'+leaderTitle(e)+'</span>'+(L?L.name:"공위")+'</div>'
+ +'<div><span>인구</span>'+kfmt(e.pop)+' / 세계 '+kfmt(worldPop())+'</div><div><span>영토</span>'+kfmt(landOf(e))+'km² · 속주 '+provsOf(e).length+'개</div>'
+ +'<div><span>속령</span>'+coloniesOf(e).length+'개</div><div><span>기술</span>'+TECHS[e.tech].n+'</div>'
+ +'<div><span>멸망한 세력</span>'+S.entities.filter(x=>!x.alive).length+'개</div><div><span>국고</span>'+kfmt(goldOf(e))+'펜</div></div>'
+ +'<p style="color:#8d8878;font-size:12px">통일 시대에는 <b>권태</b>와 부패가 쌓인다. 총독의 반란 · 야만족의 대이동 · 계승 분쟁 · 속령 대봉기가 제국을 흔들고, 대건축과 번영의 해가 이를 늦춘다. 권태가 깊어져 안정도가 20 아래로 떨어지면 제국은 <b>붕괴</b>해 세계는 다시 전국 시대로 돌아간다.</p>';
+ $("unity").style.display="flex";
+ if(S.speed)setSpeed(0);
+}
+
+/* ---------- 지형: 세계마다 다른 해안선·산맥·강·숲·섬 ---------- */
+function rng32(seed){let a=seed>>>0;return function(){a=(a+0x6D2B79F5)|0;let t=Math.imul(a^(a>>>15),1|a);t=(t+Math.imul(t^(t>>>7),61|t))^t;return((t^(t>>>14))>>>0)/4294967296}}
+function strHash(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return (h>>>0)||1}
+function contGeo(c){const m=/left:([\d.]+)%;top:([\d.]+)%;width:([\d.]+)%;height:([\d.]+)%/.exec(c.css);const l=+m[1],t=+m[2],w=+m[3],h=+m[4];return {cx:l+w/2,cy:t+h/2,rx:w/2,ry:h/2}}
+function coastShape(cx,cy,rx,ry,R,n,rough,waist){                       /* 울퉁불퉁한 해안선 (waist: 가운데가 잘록한 정도) */
+ const K=4,ph=[],am=[],fr=[2,3,5,7+Math.floor(R()*4)],base=[0.55,0.3,0.18,0.1];
+ for(let k=0;k<K;k++){ph.push(R()*6.283);am.push(rough*base[k]*(0.7+R()*0.6))}
+ const wz=waist||0;
+ const rad=a=>{let m=1.03-wz*Math.pow(Math.sin(a),2);for(let k=0;k<K;k++)m+=am[k]*Math.sin(a*fr[k]+ph[k]);return m};
+ const pts=[];for(let i=0;i<n;i++){const a=i/n*6.283,m=rad(a);pts.push([cx+Math.cos(a)*rx*m,cy+Math.sin(a)*ry*m])}
+ const f=v=>v.toFixed(2),mid=(p,q)=>[(p[0]+q[0])/2,(p[1]+q[1])/2];
+ const m0=mid(pts[0],pts[1]);let d="M"+f(m0[0])+" "+f(m0[1]);
+ for(let i=1;i<=n;i++){const p=pts[i%n],q=pts[(i+1)%n],mm=mid(p,q);d+="Q"+f(p[0])+" "+f(p[1])+" "+f(mm[0])+" "+f(mm[1])}
+ return {d:d+"Z",rad:rad,inside:(x,y,k)=>{const dx=(x-cx)/rx,dy=(y-cy)/ry;return Math.hypot(dx,dy)<rad(Math.atan2(dy,dx))*(k||1)}};
+}
+function buildTerrain(){
+ const box=$("lands"),mapEl=$("map");if(!box)return;
+ const W=(mapEl&&mapEl.clientWidth)||900,H=(mapEl&&mapEl.clientHeight)||450,asp=W/H,ax=1/asp;   /* 가로로 늘어나는 만큼 x를 줄여 모양을 지킨다 */
+ const R=rng32(S.seed||1),f=v=>v.toFixed(2);
+ const defs='<defs><radialGradient id="lg" cx="40%" cy="35%" r="75%"><stop offset="0" stop-color="#7d8d5e"/><stop offset=".65" stop-color="#66754e"/><stop offset="1" stop-color="#4b5a3a"/></radialGradient></defs>';
+ let shallow="",land="",feat="",labels="",clip="";
+ const shapes=[];
+ for(let i=10;i<100;i+=10)feat+='<line x1="'+i+'" y1="0" x2="'+i+'" y2="100" stroke="#fff" stroke-opacity=".035" stroke-width=".15"/><line x1="0" y1="'+i+'" x2="100" y2="'+i+'" stroke="#fff" stroke-opacity=".035" stroke-width=".15"/>';
+ for(let i=0;i<36;i++){const x=R()*100,y=R()*100,w=1.4+R()*2.4;                                   /* 물결 */
+  feat+='<path d="M'+f(x)+' '+f(y)+' q'+f(w/2)+' -'+f(w*0.3)+' '+f(w)+' 0" fill="none" stroke="#8fb9c6" stroke-opacity=".16" stroke-width=".16"/>'}
+ CONTINENTS.forEach(c=>{
+  const g=contGeo(c),big=Math.max(1,g.rx*g.ry/380),sh=coastShape(g.cx,g.cy,g.rx,g.ry,R,Math.round(60*Math.sqrt(big)),0.2,c.waist);shapes.push(sh);
+  shallow+='<path d="'+sh.d+'" fill="none" stroke="#5f93a3" stroke-opacity=".32" stroke-width="2.8"/><path d="'+sh.d+'" fill="none" stroke="#8cbac7" stroke-opacity=".32" stroke-width="1.2"/>';
+  land+='<path d="'+sh.d+'" fill="url(#lg)" stroke="#cdbf86" stroke-width=".32"/>';clip+='<path d="'+sh.d+'" transform="scale(0.01)"/>';
+  const pin=k=>{for(let t=0;t<40;t++){const a=R()*6.283,r=Math.sqrt(R())*k,x=g.cx+Math.cos(a)*g.rx*r,y=g.cy+Math.sin(a)*g.ry*r;if(sh.inside(x,y,0.8))return [x,y]}return [g.cx,g.cy]};
+  for(let dz=0;dz<Math.round(big);dz++)if(R()<0.6){const p=pin(0.6),rx=4+R()*5,ry=2.6+R()*2.4;              /* 사막 */
+   feat+='<ellipse cx="'+f(p[0])+'" cy="'+f(p[1])+'" rx="'+f(rx)+'" ry="'+f(ry)+'" fill="#c6ae70" fill-opacity=".5" transform="rotate('+f(R()*50-25)+' '+f(p[0])+' '+f(p[1])+')"/>';
+   for(let i=0;i<5;i++){const x=p[0]+(R()-0.5)*rx*1.2,y=p[1]+(R()-0.5)*ry*1.2;feat+='<path d="M'+f(x)+' '+f(y)+' q'+f(1.2*ax)+' -.45 '+f(2.4*ax)+' 0" fill="none" stroke="#9f8a52" stroke-opacity=".5" stroke-width=".16"/>'}}
+  const nf=Math.round((4+Math.floor(R()*4))*big);                                                    /* 숲 */
+  for(let i=0;i<nf;i++){const p=pin(0.8),n=9+Math.floor(R()*12);let gs='<g fill="#3b5832" fill-opacity=".82">';
+   for(let j=0;j<n;j++){const a=R()*6.283,r=Math.sqrt(R())*3.6,x=p[0]+Math.cos(a)*r*ax*1.3,y=p[1]+Math.sin(a)*r*0.8,sz=0.5+R()*0.6;
+    if(!sh.inside(x,y,0.92))continue;gs+='<ellipse cx="'+f(x)+'" cy="'+f(y)+'" rx="'+f(sz*ax)+'" ry="'+f(sz)+'"/>'}
+   feat+=gs+'</g>'}
+  const nl=Math.round((1+Math.floor(R()*2))*big);                                                    /* 호수 */
+  for(let i=0;i<nl;i++){const p=pin(0.65),sz=0.8+R()*1.1;feat+='<ellipse cx="'+f(p[0])+'" cy="'+f(p[1])+'" rx="'+f(sz*ax*1.5)+'" ry="'+f(sz)+'" fill="#4d8aa4" stroke="#8ec0d0" stroke-width=".16"/>'}
+  const nm=Math.round((1+Math.floor(R()*2))*big),peaks=[];                                           /* 산맥 */
+  for(let i=0;i<nm;i++){
+   const p=pin(0.5),ang=R()*6.283,len=0.35+R()*0.45,n=6+Math.floor(R()*5);
+   for(let j=0;j<n;j++){const t=(j/(n-1)-0.5)*len,wob=(R()-0.5)*2;
+    const x=p[0]+Math.cos(ang)*t*g.rx+Math.cos(ang+1.57)*wob*ax,y=p[1]+Math.sin(ang)*t*g.ry+Math.sin(ang+1.57)*wob;
+    if(!sh.inside(x,y,0.86))continue;
+    const h=1.5+R()*2.3,w=h*1.05*ax;peaks.push([x,y]);
+    feat+='<path d="M'+f(x-w)+' '+f(y)+' L'+f(x)+' '+f(y-h)+' L'+f(x+w)+' '+f(y)+'Z" fill="#8d8772"/>'
+     +'<path d="M'+f(x)+' '+f(y-h)+' L'+f(x+w)+' '+f(y)+' L'+f(x)+' '+f(y)+'Z" fill="#5f5b4d"/>'
+     +(h>2.7?'<path d="M'+f(x-w*0.22)+' '+f(y-h*0.62)+' L'+f(x)+' '+f(y-h)+' L'+f(x+w*0.22)+' '+f(y-h*0.62)+'Z" fill="#eef1ea"/>':'');
+   }
+  }
+  const nr=peaks.length?Math.round((2+Math.floor(R()*2))*big):0;                                     /* 강: 산에서 바다로 */
+  for(let i=0;i<nr;i++){
+   const pk=peaks[Math.floor(R()*peaks.length)];let x=pk[0],y=pk[1];const ph=R()*6.283;let d="M"+f(x)+" "+f(y);
+   for(let st=0;st<60;st++){const dx=(x-g.cx)/g.rx,dy=(y-g.cy)/g.ry,o=Math.atan2(dy,dx),a=o+Math.sin(st*0.6+ph)*0.8;
+    x+=Math.cos(a)*1.1*ax*1.4;y+=Math.sin(a)*1.1;d+=" L"+f(x)+" "+f(y);
+    if(Math.hypot((x-g.cx)/g.rx,(y-g.cy)/g.ry)>=sh.rad(Math.atan2((y-g.cy)/g.ry,(x-g.cx)/g.rx))*0.995)break}
+   feat+='<path d="'+d+'" fill="none" stroke="#5f9ab4" stroke-width=".3" stroke-linecap="round" stroke-linejoin="round" stroke-opacity=".95"/>';
+  }
+  labels+='<div class="clabel" style="left:'+f(g.cx)+'%;top:'+f(g.cy+g.ry*0.74)+'%">'+c.name+'</div>';
+ });
+ let isl=0,tries=0;                                                                                  /* 섬 */
+ while(isl<11&&tries<260){tries++;const x=3+R()*94,y=3+R()*94;
+  if(shapes.some(sh=>sh.inside(x,y,1.3)))continue;
+  const r=0.6+R()*1.7,sh=coastShape(x,y,r*ax*1.4,r,R,18,0.35);
+  shallow+='<path d="'+sh.d+'" fill="none" stroke="#8cbac7" stroke-opacity=".3" stroke-width=".9"/>';
+  land+='<path d="'+sh.d+'" fill="#6d7c53" stroke="#cdbf86" stroke-width=".22"/>';clip+='<path d="'+sh.d+'" transform="scale(0.01)"/>';
+  if(R()<0.4)feat+='<ellipse cx="'+f(x)+'" cy="'+f(y)+'" rx="'+f(r*0.4*ax)+'" ry="'+f(r*0.4)+'" fill="#3b5832" fill-opacity=".8"/>';
+  isl++}
+ box.innerHTML='<svg class="terrain" viewBox="0 0 100 100" preserveAspectRatio="none">'+defs+'<clipPath id="landclip" clipPathUnits="objectBoundingBox">'+clip+'</clipPath>'+shallow+land+feat+'</svg>'+labels;
+ box._seed=S.seed;box._asp=Math.round(asp*10);
+}
+
+/* ---------- 옆 패널 탭 ---------- */
+function showTab(t,scrollUp){
+ document.querySelectorAll("#sideTabs button").forEach(b=>b.classList.toggle("on",b.dataset.t===t));
+ document.querySelectorAll(".area-feed .tabp").forEach(x=>x.classList.toggle("on",x.dataset.t===t));
+ const h=$("sideHint");if(h)h.textContent=t==="feed"?"최신순":t==="player"?"직접 다스리는 세력":"세계에 손대기";
+ if(scrollUp&&typeof window.scrollTo==="function")window.scrollTo({top:0,behavior:"smooth"});
+}
+
+/* ---------- 국경: 속주가 맞닿으면 전쟁이 터진다 ---------- */
+function provR(p){return Math.sqrt(p.area/1000)*1.2*Math.sqrt(p.ar||1)}   /* 지도 위 반지름(%) */
+function bordersTouch(A,B){
+ if(A.cont!==B.cont)return false;
+ const pa=provsOf(A),pb=provsOf(B);
+ for(const p of pa)for(const q of pb)if(Math.hypot(p.x-q.x,p.y-q.y)<(provR(p)+provR(q))*0.9)return true;
+ return false;
+}
+function sameSide(A,B){return S.wars.some(w=>(w.sa.indexOf(A.id)>=0&&w.sa.indexOf(B.id)>=0)||(w.sb.indexOf(A.id)>=0&&w.sb.indexOf(B.id)>=0))}
+function borderCheck(){
+ const L=alive();
+ for(let i=0;i<L.length;i++)for(let j=i+1;j<L.length;j++){
+  const A=L[i],B=L[j];
+  if(A.cont!==B.cont||A.overlord||B.overlord)continue;
+  const R=tension(A.id,B.id);
+  if(R.ally)continue;
+  if(S.wars.some(w=>inWar(w,A)&&inWar(w,B))||sameSide(A,B))continue;
+  if(S.t-(R.lastWar===undefined?-999:R.lastWar)<15)continue;          /* 휴전 15년 */
+  if(warsOf(A).length>=2||warsOf(B).length>=2)continue;            /* 이미 두 전선을 치르는 나라는 국경 충돌을 미룬다 */
+  if(!bordersTouch(A,B))continue;
+  R.ten=100;
+  const agg=armyOf(A)>=armyOf(B)?A:B,def=agg===A?B:A;
+  logEv("국경 충돌",A.name+"과 "+B.name+"의 국경이 맞닿아 피를 보는 충돌이 벌어졌다.","bad","전쟁");
+  startWar(agg,def,"국경 충돌");
+ }
+}
+
+/* ---------- 내 나라: 플레이어가 다스리는 세력 ---------- */
+function playerEnt(){if(!S||!S.player)return null;const e=ent(S.player);return e&&e.alive?e:null}
+function needMe(){const me=playerEnt();if(!me)toast("먼저 다스릴 나라를 골라라");return me}
+function pPay(me,amt,what){
+ if(goldOf(me)-amt<-incomeOf(me)*2){toast("국고가 모자란다 — "+what+"에 "+kfmt(amt)+"펜이 필요하다");return false}
+ payFrom(me,amt);return true;
+}
+function pTakeId(id){
+ const e=ent(id);if(!e||!e.alive){toast("다스릴 수 없는 나라다");return}
+ S.player=e.id;
+ logEv("통치 시작","플레이어가 "+e.name+"을(를) 다스리기 시작했다.","god","개입",true);
+ closeAll();renderAll();toast(e.name+"을(를) 다스린다");showTab("player",true);
+}
+function pTake(){const v=+$("pk").value;if(!v){toast("나라를 골라라");return}pTakeId(v)}
+function pRelease(){
+ const me=playerEnt();if(!me){toast("다스리는 나라가 없다");return}
+ logEv("통치 종료","플레이어가 "+me.name+"의 통치에서 손을 뗐다.","god","개입",true);
+ S.player=null;renderAll();toast(me.name+"을(를) 놓았다");
+}
+function pDiplo(){if(!needMe())return;openModal("diplo");pDiploInfo()}
+function pDiploInfo(){
+ const me=playerEnt(),o=ent(+$("dp").value),box=$("dpInfo");
+ if(!me||!o){box.textContent="";return}
+ if(o.id===me.id){box.textContent="자기 나라다.";return}
+ const R=tension(me.id,o.id),war=S.wars.some(w=>inWar(w,me)&&inWar(w,o));
+ box.innerHTML='<b>'+o.name+'</b> · 긴장도 '+R.ten.toFixed(0)+' · '+(R.ally?"동맹":R.trade?"교역 중":"관계 없음")+(war?' · <b style="color:#e09a92">교전 중</b>':'')
+  +'<br>군사력 '+kfmt(armyOf(o))+' (우리 '+kfmt(armyOf(me))+') · 인구 '+kfmt(o.pop)+(o.cont!==me.cont?' · 다른 대륙'+(canSail(me)?(canSail(o)?'':' · 상대는 배가 없다'):' (우리 항해술 필요)'):'')
+  +'<br>동맹 선물 '+kfmt(incomeOf(me)*0.3)+'펜 · 교역 제안은 무료';
+}
+function pDeclare(){
+ const me=needMe();if(!me)return;const o=ent(+$("dp").value);
+ if(!o||o.id===me.id){toast("상대를 골라라");return}
+ if(S.wars.some(w=>inWar(w,me)&&inWar(w,o))){toast("이미 교전 중이다");return}
+ if(me.cont!==o.cont&&!canSail(me)){toast("바다를 건널 배가 없다 — 항해술(기술 8단계)이 필요하다");return}
+ if(me.overlord){toast("종주국의 지배를 받는 동안은 전쟁을 일으킬 수 없다 — 먼저 독립하라");return}
+ const R=tension(me.id,o.id);if(R.ally){R.ally=false;logEv("동맹 파기",me.name+"이(가) "+o.name+"과의 동맹을 깨뜨렸다.","bad","개입",true)}
+ me.stab=clamp(me.stab-4,0,100);
+ const ovO=overlordOf(o);
+ if(ovO&&ovO.id===me.id){toast("자기 식민지와는 싸울 수 없다");return}
+ if(!startWar(me,o,"선전포고")){toast("전쟁을 일으킬 수 없다");return}
+ closeAll();renderAll();toast(ovO?(o.name+"은(는) "+ovO.name+"의 식민지다 — "+ovO.name+"에 선전포고했다"):(o.name+"에 선전포고했다"));
+}
+function pAlly(){
+ const me=needMe();if(!me)return;const o=ent(+$("dp").value);
+ if(!o||o.id===me.id){toast("상대를 골라라");return}
+ const R=tension(me.id,o.id);
+ if(R.ally){toast("이미 동맹이다");return}
+ if(S.wars.some(w=>inWar(w,me)&&inWar(w,o))){toast("교전 중인 상대와는 동맹을 맺을 수 없다");return}
+ const gift=incomeOf(me)*0.3;if(!pPay(me,gift,"동맹 선물"))return;
+ o.gold=goldOf(o)+gift;
+ const p=clamp((55-R.ten)/60+(R.trade?0.25:0)+(armyOf(me)>armyOf(o)?0.1:0),0.05,0.9);
+ if(Math.random()<p){R.ally=true;R.trade=true;R.ten=Math.max(0,R.ten-20);
+  logEv("동맹 체결",me.name+"의 제안으로 "+o.name+"과 동맹을 맺었다.","god","개입",true);toast(o.name+"이(가) 동맹을 받아들였다")}
+ else{R.ten=Math.max(0,R.ten-6);logEv("동맹 거절",o.name+"이(가) "+me.name+"의 동맹 제안을 거절했다. (선물 "+kfmt(gift)+"펜)","bad","개입");toast(o.name+"이(가) 거절했다 (수락 확률 "+Math.round(p*100)+"%)")}
+ closeAll();renderAll();
+}
+function pTrade(){
+ const me=needMe();if(!me)return;const o=ent(+$("dp").value);
+ if(!o||o.id===me.id){toast("상대를 골라라");return}
+ const R=tension(me.id,o.id);
+ if(R.trade){toast("이미 교역 중이다");return}
+ if(S.wars.some(w=>inWar(w,me)&&inWar(w,o))){toast("교전 중인 상대와는 교역할 수 없다");return}
+ const p=R.ten<35?0.85:R.ten<60?0.55:0.2;
+ if(Math.random()<p){R.trade=true;R.ten=Math.max(0,R.ten-12);
+  logEv("교역로 개설",me.name+"의 제안으로 "+o.name+"과 교역이 시작되었다.","god","개입");toast(o.name+"과 교역을 시작했다")}
+ else{logEv("교역 거절",o.name+"이(가) "+me.name+"의 교역 제안을 물리쳤다.","bad","개입");toast(o.name+"이(가) 거절했다")}
+ closeAll();renderAll();
+}
+function pPeace(){
+ const me=needMe();if(!me)return;
+ const ws=warsOf(me);if(!ws.length){toast("진행 중인 전쟁이 없다");return}
+ if(me.peaceCd&&me.peaceCd>S.t){toast("상대가 아직 응답하지 않는다 — "+Math.ceil(me.peaceCd-S.t)+"년 뒤 다시 제안할 수 있다");return}
+ const w=ws[0],mine=w.sa.indexOf(me.id)>=0?"a":"b",foe=mine==="a"?"b":"a";
+ const A=warMembers(w,"a"),B=warMembers(w,"b"),adv=w.front*(mine==="a"?1:-1),dur=S.t-w.startT;
+ const enemy=ent(mine==="a"?w.b:w.a);
+ const p=adv>0.2?0.85:adv<-0.2?0.35:0.6;
+ me.peaceCd=S.t+3;
+ if(Math.random()>=p){logEv("강화 거절",enemy.name+"이(가) "+me.name+"의 강화 제안을 거절했다.","bad","개입");renderAll();toast(enemy.name+"이(가) 강화를 거절했다 (확률 "+Math.round(p*100)+"%)");return}
+ const idx=S.wars.indexOf(w);if(idx>=0)S.wars.splice(idx,1);
+ for(const x of A)for(const y of B){const R=tension(x.id,y.id);R.ten=45;R.lastWar=S.t}
+ let extra="";
+ if(adv<-0.2){                                     /* 밀리는 쪽은 값을 치른다 */
+  const mv=transferProv(enemy,me,1);const pay=incomeOf(me)*1.5;payFrom(me,pay);enemy.gold=goldOf(enemy)+pay;
+  extra=" "+me.name+"이(가) "+(mv?kfmt(mv)+"km²와 ":"")+kfmt(pay)+"펜을 내놓았다.";
+ }else if(adv>0.2){
+  const mv=transferProv(me,enemy,1);const pay=incomeOf(enemy)*1.2;payFrom(enemy,pay);me.gold=goldOf(me)+pay;
+  extra=" "+enemy.name+"이(가) "+(mv?kfmt(mv)+"km²와 ":"")+kfmt(pay)+"펜을 내놓았다.";
+ }
+ for(const e of A.concat(B))e.stab=clamp(e.stab+5,0,100);
+ logEv("강화 조약",me.name+"의 제안으로 "+(w.scale||"전쟁")+"이 "+Math.floor(dur)+"년 만에 끝났다."+extra,"god","개입",true);
+ renderAll();toast("강화가 맺어졌다");
+}
+function pExpand(){
+ const me=needMe();if(!me)return;
+ if(provsOf(me).length>=9){toast("더 거느릴 수 없다 — 속주는 9개까지다");return}
+ if(freeArea(me.cont)<12000){toast(CONTINENTS[me.cont].name+"에 빈 땅이 없다 — 전쟁이나 바다 너머로 나아가라");return}
+ const cost=incomeOf(me);if(!pPay(me,cost,"영토 확장"))return;
+ const p=addProv(me,me.cont,Math.min(freeArea(me.cont),ri(14,34)*1000),false);
+ logEv("영토 확장",me.name+"이(가) "+p.name+"을(를) 새로 차지했다. (+"+kfmt(p.area)+"km² · "+kfmt(cost)+"펜)","god","개입");
+ renderAll();toast(p.name+" 획득");
+}
+function pArmy(dir){
+ const me=needMe();if(!me)return;
+ if(dir>0){
+  if(me.armyMul>=2.5){toast("더 늘릴 수 없다");return}
+  const cost=incomeOf(me)*0.8;if(!pPay(me,cost,"군비 증강"))return;
+  me.armyMul=Math.min(2.5,me.armyMul+0.2);me.stab=clamp(me.stab-3,0,100);
+  logEv("군비 증강",me.name+"이(가) 군대를 키웠다. (군사 배율 "+me.armyMul.toFixed(1)+" · "+kfmt(cost)+"펜)","god","개입");toast("군사 배율 "+me.armyMul.toFixed(1));
+ }else{
+  if(me.armyMul<=0.5){toast("더 줄일 수 없다");return}
+  me.armyMul=Math.max(0.5,me.armyMul-0.2);me.stab=clamp(me.stab+3,0,100);
+  logEv("군축",me.name+"이(가) 군대를 줄였다. (군사 배율 "+me.armyMul.toFixed(1)+")","god","개입");toast("군사 배율 "+me.armyMul.toFixed(1));
+ }
+ renderAll();
+}
+function pResearch(){
+ const me=needMe();if(!me)return;
+ if(me.tech>=TECHS.length-1){toast("더 연구할 기술이 없다");return}
+ const cost=incomeOf(me)*1.2;if(!pPay(me,cost,"연구 투자"))return;
+ me.techPts+=techNeed(me.tech)*0.35;
+ logEv("연구 투자",me.name+"이(가) 학자들에게 "+kfmt(cost)+"펜을 쏟아 '"+TECHS[me.tech+1].n+"' 연구를 앞당겼다.","god","개입");
+ renderAll();toast("연구 진척 "+Math.round(me.techPts/techNeed(me.tech)*100)+"%");
+}
+function pWelfare(){
+ const me=needMe();if(!me)return;
+ const cost=incomeOf(me);if(!pPay(me,cost,"민생 안정"))return;
+ me.stab=clamp(me.stab+10,0,100);me.famine*=0.5;me.plague*=0.7;
+ logEv("민생 안정",me.name+"이(가) "+kfmt(cost)+"펜을 풀어 백성을 달랬다. (안정 "+me.stab.toFixed(0)+")","god","개입");
+ renderAll();toast("안정도 "+me.stab.toFixed(0));
+}
+function pUN(){
+ const me=needMe();if(!me)return;
+ if(!S.un){toast("아직 국제 연합이 없다 — 개입에서 창설할 수 있다");return}
+ if(isMember(me)){unLeave(me,"스스로");renderAll();toast("국제 연합을 떠났다");return}
+ if(me.overlord){toast("식민지·속국은 가맹할 수 없다");return}
+ if(me.rank<2){toast("도시 국가 이상이어야 가맹할 수 있다");return}
+ S.un.members.push(me.id);
+ logEv("국제 연합 가입",me.name+"이(가) 국제 연합에 가입했다.","god","개입");
+ renderAll();toast("국제 연합에 가맹했다");
+}
+function pIndep(){
+ const me=needMe();if(!me)return;
+ const ov=overlordOf(me);if(!ov){toast("이미 독립국이다");return}
+ if(S.wars.some(w=>inWar(w,me)&&inWar(w,ov))){toast("이미 독립 전쟁 중이다");return}
+ startIndepWar(me,ov);renderAll();toast(ov.name+"에 맞서 봉기했다");
+}
+function renderPlayer(){
+ const me=playerEnt(),pb=$("playerBox"),pk=$("playerPick");if(!pb)return;
+ if(!me){
+  if(pk.style.display!=="")pk.style.display="";
+  setHtml(pb,'<span style="color:#7e7a6e">아직 다스리는 나라가 없다. 위에서 나라를 고르거나 새로 세워라. 지도나 문명 표에서 나라를 눌러도 다스릴 수 있다.</span>');
+  return;
+ }
+ if(pk.style.display!=="none")pk.style.display="none";
+ const L=leaderOf(me),ec=econOf(me),g=goldOf(me),OV=overlordOf(me),b=bonuses(me),cap=capOf(me);
+ const wars=warsOf(me).map(w=>{const mine=w.sa.indexOf(me.id)>=0?"a":"b";const adv=w.front*(mine==="a"?1:-1);
+  return (w.scale||"전쟁")+" vs "+warMembers(w,mine==="a"?"b":"a").map(x=>x.name).join(", ")
+   +' <span class="'+(adv>0.05?"pos":adv<-0.05?"neg":"")+'">('+(adv>0.05?"우세":adv<-0.05?"열세":"교착")+" "+Math.round(Math.abs(adv)*100)+"%)</span>"});
+ const allies=[],trades=[],foes=[];
+ for(const o of alive()){if(o.id===me.id)continue;const R=S.rel[relKey(me.id,o.id)];if(!R)continue;
+  if(R.ally)allies.push(o.name);else if(R.trade)trades.push(o.name);if(R.ten>70&&!R.ally)foes.push(o.name+"("+R.ten.toFixed(0)+")")}
+ const html='<div class="row"><span class="nm">'+me.name+'</span><span>'+RANKS[me.rank]+' · '+GOVS[me.gov]+' · '+CONTINENTS[me.cont].name+'</span>'
+  +'<span>'+leaderTitle(me)+' <b>'+(L?L.name:"공위")+'</b></span>'
+  +(OV?'<span class="neg">'+OV.name+'의 '+(OV.cont!==me.cont?"식민지":"속국")+'</span>':'')
+  +(isMember(me)?'<span>국제 연합 가맹'+(S.un&&S.un.host===me.id?" · 의장국":"")+'</span>':'')
+  +(isHegemon(me)?'<span style="color:#f0cf6e">세계 통일 '+Math.floor(S.t-S.unity.startT)+'년째 · 권태 '+Math.round(S.unity.decad)+' · 경이 '+S.unity.wonders.length+'개</span>':'')+'</div>'
+  +'<div class="row"><span>인구 <b>'+kfmt(me.pop)+'</b> / '+kfmt(cap)+'</span><span>국고 <b class="'+(g<0?"neg":"")+'">'+(g<0?"-":"")+kfmt(Math.abs(g))+'펜</b> <span class="'+(ec.net<0?"neg":"pos")+'">(연 '+(ec.net>=0?"+":"-")+kfmt(Math.abs(ec.net))+')</span></span>'
+  +'<span>연 수입 '+kfmt(ec.inc)+' · 지출 '+kfmt(ec.ex)+'</span><span>기술 <b>'+TECHS[me.tech].n+'</b> '+Math.round(me.tech>=TECHS.length-1?100:me.techPts/techNeed(me.tech)*100)+'%</span>'
+  +'<span>안정 <b class="'+(me.stab<35?"neg":"")+'">'+me.stab.toFixed(0)+'</b></span><span>군사 <b>'+kfmt(armyOf(me)*b.army)+'</b> (배율 '+me.armyMul.toFixed(1)+')</span>'
+  +(canSail(me)?'<span>해군 '+kfmt(navyOf(me,b))+'</span>':'')+'<span>영토 '+kfmt(landOf(me))+'km² · 속주 '+provsOf(me).length+'개</span></div>'
+  +'<div class="row"><span>전쟁: '+(wars.length?wars.join(" / "):"없음")+'</span></div>'
+  +'<div class="row"><span>동맹: '+(allies.join(", ")||"없음")+'</span><span>교역: '+(trades.join(", ")||"없음")+'</span><span>긴장 높은 상대: '+(foes.join(", ")||"없음")+'</span></div>';
+ setHtml(pb,html);
+}
+
+/* ---------- 저장 / 복원 ---------- */
+function saveGame(manual){
+ try{localStorage.setItem(SAVEKEY,JSON.stringify({v:6,nextId:nextId,s:S}));if(manual)toast("세계를 저장했다")}
+ catch(err){if(manual)toast("저장 실패: "+err.message)}
+}
+function loadGame(manual){
+ try{
+  const raw=localStorage.getItem(SAVEKEY);
+  if(!raw){if(manual)toast("저장된 세계가 없다");return false}
+  const d=JSON.parse(raw);
+  if(!d||!d.s||!d.s.entities)throw new Error("형식 오류");
+  S=d.s;nextId=d.nextId||1000;
+  if(!S.rel)S.rel={};if(!S.ongoing)S.ongoing=[];
+  if(!S.peak)S.peak={pop:0,civs:0};
+  if(!S.hist)S.hist={lastPop:worldPop(),lastT:S.t,rate:0};
+  if(!S.evSeq)S.evSeq=S.events.length;
+  if(!S.provs)S.provs=[];
+  S.wars.forEach(w=>{if(!w.sa){w.sa=[w.a];w.sb=[w.b]}if(!w.scale)w.scale=w.sea?"해상 전쟁":"전쟁";if(w.sieged===undefined)w.sieged=false});
+  if(S.un===undefined)S.un=null;
+  if(S.player===undefined)S.player=null;
+  if(S.unity===undefined)S.unity=null;if(!S.unityCount)S.unityCount=0;
+  if(!S.seed)S.seed=strHash(S.name+"|"+S.start);
+  if(!S.contV){S.contV=2;                                  /* 대륙 통합 전 저장본: 번호를 옮긴다 */
+   S.entities.forEach(e=>{e.cont=CONT_MERGE[e.cont]!==undefined?CONT_MERGE[e.cont]:0});
+   S.provs.forEach(pv=>{pv.cont=CONT_MERGE[pv.cont]!==undefined?CONT_MERGE[pv.cont]:0});
+  }
+  if(S.un&&!S.un.res)S.un.res=[];
+  S.entities.forEach(e=>{if(e.gold===undefined){e.gold=Math.round(e.pop*0.02);e.debt=false}});
+  S.provs.forEach(pv=>{if(!pv.shape){pv.shape=blobCss();pv.rot=ri(0,359);pv.ar=rnd(.68,1.45)}});
+  S.entities.forEach(e=>{                                  /* 예전 저장본 이행 */
+   if(!e.base){e.base=stripSuffix(e.name)||genName();e.suffix="";refreshName(e,true)}
+   if(e.leader===undefined)e.leader=null;
+   if(e.overlord===undefined)e.overlord=null;
+   if(e.alive)grantHome(e);
+  });
+  S.people.forEach(pp=>{if(pp.since===undefined)pp.since=pp.bornY});
+  S.events.forEach((e,i)=>{if(!e.seq)e.seq=S.events.length-i});
+  resetViews();setSpeed(S.speed||0);renderAll();
+  if(manual)toast("저장된 세계를 불러왔다 — "+yearStr(curYear())+"년");
+  return true;
+ }catch(err){if(manual)toast("불러오기 실패: "+err.message);return false}
+}
+
+/* ---------- 초기화 ---------- */
+$("speedBar").innerHTML=SPEEDS.map(s=>'<button data-v="'+s.v+'" onclick="setSpeed('+s.v+')" title="'+(s.v?"1분에 "+s.v+"년":"일시 정지")+'">'+s.l+'</button>').join("");
+$("histFilters").innerHTML=CATS.map(c=>'<button data-c="'+c+'" onclick="setFilter(\''+c+'\')" class="'+(c===histFilter?"on":"")+'">'+c+'</button>').join("");
+document.querySelectorAll(".overlay").forEach(o=>o.addEventListener("click",ev=>{if(ev.target===o)closeAll()}));
+window.addEventListener("resize",()=>{const lb=$("lands");if(lb)lb._seed=null});
+document.addEventListener("keydown",e=>{
+ if(e.key==="Escape")closeAll();
+ if(e.key===" "&&!/INPUT|TEXTAREA|SELECT|BUTTON/.test(document.activeElement.tagName)){e.preventDefault();setSpeed(S.speed?0:1)}
+});
+if(!loadGame(false)){newWorldState("테라",-10000,4);resetViews();setSpeed(1);renderAll()}
+else toast("이전 세계를 이어서 진행한다");
+if(typeof location!=="undefined"&&/^#(player|god|feed)$/.test(location.hash))showTab(location.hash.slice(1));
+start();
+</script>
+</body></html>
